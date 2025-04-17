@@ -11,6 +11,7 @@ public interface IBookService
     Task CreateAsync(CreateBookDto input);
     Task<bool> DeleteAsync(Guid bookId);
     Task<BookDto?> GetByIdAsync(Guid id);
+    Task<bool> GetIsBorrowedBookSpecificUserIdAsync(Guid userId, Guid bookId);
     Task<PaginatedResponse<BookDto>> GetListAsync(GetPaginateListDto input);
     Task<PaginatedResponse<BookDto>?> GetUserBorrowingBooksAsync(Guid userId, GetPaginateListDto input);
     Task<IEnumerable<Borrowing>?> GetUserBorrowingsAsync(Guid userId);
