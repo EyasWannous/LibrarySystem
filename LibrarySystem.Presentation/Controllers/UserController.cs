@@ -3,8 +3,8 @@ using LibrarySystem.BusinessLogic.Users.DTOs;
 using LibrarySystem.Presentation.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
 namespace LibrarySystem.Presentation.Controllers;
@@ -76,23 +76,21 @@ public class UserController : Controller
     {
         Response.Cookies.Delete("LibrarySystem.AuthToken");
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+
         return RedirectToAction("Index", "Home");
     }
 
     private async Task SignInUser(UserManagerResponse response)
     {
-        var claims = new List<Claim>
-        {
-            new(ClaimTypes.NameIdentifier, response.User!.Id.ToString()),
-            new(ClaimTypes.Email, response.User.Email),
-            new(ClaimTypes.Name, $"{response.User.FirstName} {response.User.LastName}")
-        };
+        var token = response.JwtToken;
+        var handler = new JwtSecurityTokenHandler();
+        var jwtToken = handler.ReadJwtToken(token);
+
+        var claims = jwtToken.Claims.ToList();
 
         var claimsIdentity = new ClaimsIdentity(
             claims,
-            CookieAuthenticationDefaults.AuthenticationScheme,
-            ClaimTypes.Name,
-            ClaimTypes.Role
+            CookieAuthenticationDefaults.AuthenticationScheme
         );
 
         await HttpContext.SignInAsync(
@@ -104,13 +102,12 @@ public class UserController : Controller
                 ExpiresUtc = response.ExpiryDate
             });
 
-        //await HttpContext.SignInAsync(
-        //    JwtBearerDefaults.AuthenticationScheme,
-        //    new ClaimsPrincipal(claimsIdentity),
-        //    new AuthenticationProperties
-        //    {
-        //        IsPersistent = true,
-        //        ExpiresUtc = response.ExpiryDate
-        //    });
+        HttpContext.Response.Cookies.Append("LibrarySystem.AuthToken", response.JwtToken, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.Strict,
+            Expires = response.ExpiryDate
+        });
     }
 }

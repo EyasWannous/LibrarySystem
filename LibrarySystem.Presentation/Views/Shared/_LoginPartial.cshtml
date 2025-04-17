@@ -6,7 +6,7 @@
     @if (User.Identity?.IsAuthenticated ?? false)
     {
         <li class="nav-item">
-            <span class="nav-link text-light">Welcome @User.FindFirst(ClaimTypes.Name)?.Value!</span>
+            <span class="nav-link text-light">Welcome @User.FindFirst(ClaimTypes.GivenName)?.Value!</span>
         </li>
         <li class="nav-item">
             <form class="form-inline" asp-controller="User" asp-action="Logout">
