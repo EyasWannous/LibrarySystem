@@ -6,8 +6,6 @@ using LibrarySystem.BusinessLogic.Users;
 using LibrarySystem.Data.Books;
 using LibrarySystem.Data.Migrations;
 using LibrarySystem.Data.Users;
-using LibrarySystem.Presentation.Middleware;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Npgsql;
@@ -35,14 +33,6 @@ builder.Services.AddScoped<PasswordHasher>();
 
 builder.Services.AddHttpContextAccessor();
 
-//// Add session support
-//builder.Services.AddSession(options =>
-//{
-//    options.IdleTimeout = TimeSpan.FromMinutes(30);
-//    options.Cookie.HttpOnly = true;
-//    options.Cookie.IsEssential = true;
-//});
-
 var jwtOptionsSection = builder.Configuration.GetSection("JwtOptions");
 
 builder.Services.Configure<JwtOptions>(jwtOptionsSection);
@@ -65,39 +55,21 @@ var tokenValidationParameters = new TokenValidationParameters
 
 builder.Services.AddSingleton(tokenValidationParameters);
 
-//builder.Services.AddAuthentication(options =>
-//{
-//    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-//    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-//})
-//.AddJwtBearer(options =>
-//{
-//    options.TokenValidationParameters = tokenValidationParameters;
-//    options.SaveToken = true;
-//})
-//.AddCookie(options =>
-//{
-//    options.LoginPath = "/User/Login";
-//    options.AccessDeniedPath = "/Home/AccessDenied";
-//    options.ExpireTimeSpan = jwtOptions.ExpireTime;
-//});
-
 builder.Services.AddAuthentication(options =>
 {
-    options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-    options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-})
-.AddCookie(options =>
-{
-    options.LoginPath = "/User/Login";
-    options.AccessDeniedPath = "/Home/AccessDenied";
-    options.ExpireTimeSpan = TimeSpan.FromDays(30);
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 })
 .AddJwtBearer(options =>
 {
     options.TokenValidationParameters = tokenValidationParameters;
     options.SaveToken = true;
+})
+.AddCookie(options =>
+{
+    options.LoginPath = "/User/Login";
+    options.AccessDeniedPath = "/Home/AccessDenied";
+    options.ExpireTimeSpan = jwtOptions.ExpireTime;
 });
 
 var app = builder.Build();
@@ -114,9 +86,18 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 
+app.Use(async (context, next) =>
+{
+    if (context.Request.Cookies.TryGetValue("LibrarySystem.AuthToken", out var token))
+    {
+        context.Request.Headers.Authorization = $"Bearer {token}";
+    }
+
+    await next();
+});
+
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseMiddleware<JwtCookieMiddleware>();
 
 app.MapStaticAssets();
 

@@ -9,7 +9,7 @@ using System.Security.Claims;
 
 namespace LibrarySystem.Presentation.Controllers;
 
-[Authorize(AuthenticationSchemes = CookieAuthenticationDefaults.AuthenticationScheme)]
+[Authorize]
 public class BookController : Controller
 {
     private readonly IBookService _bookService;
