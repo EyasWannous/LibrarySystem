@@ -1,0 +1,54 @@
+﻿@model LibrarySystem.BusinessLogic.Books.DTOs.BookDto
+@{
+    ViewData["Title"] = "Delete Book";
+}
+
+<div class="container mt-4">
+    <div class="card shadow-sm border-danger">
+        <div class="card-header bg-danger text-white">
+            <h2 class="h5 mb-0">Delete Book</h2>
+        </div>
+
+        <div class="card-body">
+            <div class="alert alert-warning">
+                <h4 class="alert-heading">Warning!</h4>
+                <p>Are you sure you want to permanently delete this book?</p>
+                <hr>
+                <p class="mb-0">This action cannot be undone.</p>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <h4>@Model.Title</h4>
+                    <dl class="row mt-3">
+                        <dt class="col-sm-4">Author:</dt>
+                        <dd class="col-sm-8">@Model.Author</dd>
+
+                        <dt class="col-sm-4">ISBN:</dt>
+                        <dd class="col-sm-8">@Model.ISBN</dd>
+
+                        <dt class="col-sm-4">Status:</dt>
+                        <dd class="col-sm-8">
+                            <span class="badge @(Model.IsBorrowed ? "bg-warning" : "bg-success")">
+                                @(Model.IsBorrowed ? "Borrowed" : "Available")
+                            </span>
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+
+            <form asp-action="Delete" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="Id" />
+                <div class="d-flex justify-content-between">
+                    <a asp-action="Index" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i> Cancel
+                    </a>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash-alt me-1"></i> Confirm Delete
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

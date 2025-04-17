@@ -1,0 +1,123 @@
+﻿@model LibrarySystem.Data.Results.PaginatedResponse<LibrarySystem.BusinessLogic.Books.DTOs.BookDto>
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "My Borrowed Books";
+
+    // Pagination parameters
+    int skip = ViewBag.Pagination?.Skip ?? 0;
+    int take = ViewBag.Pagination?.Take > 0 ? ViewBag.Pagination.Take : 10;
+    int currentPage = (skip / take) + 1;
+    int totalPages = Model?.TotalCount > 0 ? (int)Math.Ceiling((double)Model.TotalCount / take) : 1;
+    int startPage = Math.Max(1, currentPage - 2);
+    int endPage = Math.Min(totalPages, currentPage + 2);
+}
+
+<div class="container mt-4">
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>My Borrowed Books</h1>
+        <a asp-action="Index" class="btn btn-outline-primary">
+            <i class="fas fa-book me-1"></i> View All Books
+        </a>
+    </div>
+
+    @if (Model?.Items?.Any() ?? false)
+    {
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Title</th>
+                        <th>Author</th>
+                        <th>ISBN</th>
+                        <th>Borrowed Date</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.Items)
+                    {
+                        <tr>
+                            <td>@item.Title</td>
+                            <td>@item.Author</td>
+                            <td>@item.ISBN</td>
+                            <td>@item.CreatedAt.ToString("MMM dd, yyyy")</td>
+                            <td>
+                                <span class="badge @(item.IsBorrowed ? "bg-warning" : "bg-success")">
+                                    @(item.IsBorrowed ? "Borrowed" : "Returned")
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-info btn-sm">
+                                        <i class="fas fa-eye"></i> Details
+                                    </a>
+                                    @if (item.IsBorrowed)
+                                    {
+                                        <form asp-action="Return" asp-route-id="@item.Id" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-success btn-sm">
+                                                <i class="fas fa-undo"></i> Return
+                                            </button>
+                                        </form>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <nav aria-label="Page navigation" class="mt-4">
+            <ul class="pagination justify-content-center">
+                <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                    <a class="page-link" href="@Url.Action("Borrowings", new { Skip = skip - take, Take = take })">
+                        Previous
+                    </a>
+                </li>
+
+                @for (int i = startPage; i <= endPage; i++)
+                {
+                    <li class="page-item @(i == currentPage ? "active" : "")">
+                        <a class="page-link" href="@Url.Action("Borrowings", new { Skip = (i - 1) * take, Take = take })">
+                            @i
+                        </a>
+                    </li>
+                }
+
+                <li class="page-item @(currentPage >= totalPages ? "disabled" : "")">
+                    <a class="page-link" href="@Url.Action("Borrowings", new { Skip = skip + take, Take = take })">
+                        Next
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <div class="text-center text-muted mt-2">
+            Showing items @(skip + 1) to @Math.Min(skip + take, Model.TotalCount) of @Model.TotalCount
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info">
+            You haven't borrowed any books yet.
+            <a asp-action="Index" class="alert-link">Browse our collection</a>
+        </div>
+    }
+</div>

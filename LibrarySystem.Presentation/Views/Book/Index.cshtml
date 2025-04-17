@@ -1,0 +1,174 @@
+﻿@model LibrarySystem.Data.Results.PaginatedResponse<LibrarySystem.BusinessLogic.Books.DTOs.BookDto>
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Books";
+
+    // Pagination parameters
+    int skip = ViewBag.Pagination?.Skip ?? 0;
+    int take = ViewBag.Pagination?.Take > 0 ? ViewBag.Pagination.Take : 10;
+    int currentPage = (skip / take) + 1;
+    int totalPages = Model?.TotalCount > 0 ? (int)Math.Ceiling((double)Model.TotalCount / take) : 1;
+    int startPage = Math.Max(1, currentPage - 2);
+    int endPage = Math.Min(totalPages, currentPage + 2);
+
+    // Search parameters
+    var title = Context.Request.Query["Title"];
+    var author = Context.Request.Query["Author"];
+    var isbn = Context.Request.Query["ISBN"];
+}
+
+<div class="container mt-4">
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Book List</h1>
+        @if (User.Identity?.IsAuthenticated ?? false)
+        {
+            <a asp-action="Create" class="btn btn-success">
+                <i class="fas fa-plus me-1"></i> Create New
+            </a>
+        }
+    </div>
+
+    <form asp-action="Search" method="get" class="mb-4">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <input name="Title" class="form-control" placeholder="Search by title" value="@title" />
+            </div>
+            <div class="col-md-3">
+                <input name="Author" class="form-control" placeholder="Search by author" value="@author" />
+            </div>
+            <div class="col-md-3">
+                <input name="ISBN" class="form-control" placeholder="Search by ISBN" value="@isbn" />
+            </div>
+            <div class="col-md-3">
+                <div class="d-flex">
+                    <button type="submit" class="btn btn-primary me-2">Search</button>
+                    <a asp-action="Index" class="btn btn-outline-secondary">Clear</a>
+                </div>
+            </div>
+        </div>
+        <input type="hidden" name="Skip" value="@skip" />
+        <input type="hidden" name="Take" value="@take" />
+    </form>
+
+    @if (Model?.Items?.Any() ?? false)
+    {
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Title</th>
+                        <th>Author</th>
+                        <th>ISBN</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.Items)
+                    {
+                        <tr>
+                            <td>@item.Title</td>
+                            <td>@item.Author</td>
+                            <td>@item.ISBN</td>
+                            <td>
+                                <span class="badge @(item.IsBorrowed ? "bg-warning" : "bg-success")">
+                                    @(item.IsBorrowed ? "Borrowed" : "Available")
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-info btn-sm">
+                                        <i class="fas fa-eye"></i> Details
+                                    </a>
+
+                                    @if (User.Identity?.IsAuthenticated ?? false)
+                                    {
+                                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-warning btn-sm">
+                                            <i class="fas fa-edit"></i> Edit
+                                        </a>
+                                        <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-danger btn-sm">
+                                            <i class="fas fa-trash"></i> Delete
+                                        </a>
+
+                                        @if (item.IsBorrowed)
+                                        {
+                                            <form asp-action="Return" asp-route-id="@item.Id" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn btn-success btn-sm">
+                                                    <i class="fas fa-undo"></i> Return
+                                                </button>
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            <form asp-action="Borrow" asp-route-id="@item.Id" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn btn-primary btn-sm">
+                                                    <i class="fas fa-book-reader"></i> Borrow
+                                                </button>
+                                            </form>
+                                        }
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <nav aria-label="Page navigation" class="mt-4">
+            <ul class="pagination justify-content-center">
+                <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                    <a class="page-link" href="@Url.Action("Index", new { Skip = skip - take, Take = take, Title = title, Author = author, ISBN = isbn })">
+                        Previous
+                    </a>
+                </li>
+
+                @for (int i = startPage; i <= endPage; i++)
+                {
+                    <li class="page-item @(i == currentPage ? "active" : "")">
+                        <a class="page-link" href="@Url.Action("Index", new { Skip = (i - 1) * take, Take = take, Title = title, Author = author, ISBN = isbn })">
+                            @i
+                        </a>
+                    </li>
+                }
+
+                <li class="page-item @(currentPage >= totalPages ? "disabled" : "")">
+                    <a class="page-link" href="@Url.Action("Index", new { Skip = skip + take, Take = take, Title = title, Author = author, ISBN = isbn })">
+                        Next
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <div class="text-center text-muted mt-2">
+            Showing items @(skip + 1) to @Math.Min(skip + take, Model.TotalCount) of @Model.TotalCount
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info">
+            No books found.
+            @if (User.Identity?.IsAuthenticated ?? false)
+            {
+                <span>Would you like to <a asp-action="Create" class="alert-link">add a new book</a>?</span>
+            }
+        </div>
+    }
+</div>

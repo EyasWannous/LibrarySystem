@@ -1,0 +1,32 @@
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.container.flex-grow-1 {
+    flex: 1 0 auto;
+    padding-bottom: 20px;
+}
+
+.footer {
+    flex-shrink: 0;
+    width: 100%;
+    background-color: #212529;
+}
+
+    .footer .container {
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+    }
+
+    .footer a {
+        color: rgba(255, 255, 255, 0.75);
+        text-decoration: none;
+        transition: color 0.15s ease-in-out;
+    }
+
+        .footer a:hover {
+            color: white;
+            text-decoration: underline;
+        }

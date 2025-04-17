@@ -1,0 +1,26 @@
+﻿@model LibrarySystem.Presentation.Models.BorrowViewModel
+@{
+    ViewData["Title"] = "Borrow Book";
+}
+
+<div class="container mt-4">
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h2 class="h5 mb-0">Confirm Book Borrow</h2>
+        </div>
+        <div class="card-body">
+            <p>Are you sure you want to borrow this book?</p>
+            <form asp-action="Borrow">
+                <input type="hidden" asp-for="BookId" />
+                <div class="d-flex justify-content-between mt-4">
+                    <a asp-action="Details" asp-route-id="@Model.BookId" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i> Back to Details
+                    </a>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-check me-1"></i> Confirm Borrow
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
