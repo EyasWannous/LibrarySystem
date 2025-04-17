@@ -405,13 +405,14 @@ public class BookRepository : IBookRepository
                                 br.borrowed_at
                             FROM borrowings br
                             JOIN books b ON br.book_id = b.id
-                            WHERE br.user_id = @userId
+                            WHERE br.user_id = @userId AND b.is_borrowed
                             ORDER BY br.borrowed_at DESC
                             LIMIT @take OFFSET @skip;
 
                             SELECT COUNT(*) 
-                            FROM borrowings 
-                            WHERE user_id = @userId;
+                            FROM borrowings br
+                            JOIN books b ON br.book_id = b.id
+                            WHERE user_id = @userId AND b.is_borrowed;
                             ";
 
         await using var cmd = new NpgsqlCommand(sql, _db);
