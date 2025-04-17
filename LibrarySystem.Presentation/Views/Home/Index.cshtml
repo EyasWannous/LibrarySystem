@@ -1,8 +1,192 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Welcome to Our Platform";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3f37c9;
+            --accent-color: #4cc9f0;
+            --light-color: #f8f9fa;
+            --dark-color: #212529;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            color: var(--dark-color);
+        }
+
+        .hero-section {
+            padding: 5rem 1rem;
+            text-align: center;
+            background: linear-gradient(135deg, rgba(67, 97, 238, 0.1) 0%, rgba(76, 201, 240, 0.1) 100%);
+            border-radius: 0 0 20px 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 3rem;
+        }
+
+        .display-4 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(to right, var(--primary-color), var(--accent-color));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: fadeIn 1s ease-in-out;
+        }
+
+        .lead {
+            font-size: 1.25rem;
+            max-width: 800px;
+            margin: 0 auto 2rem;
+            line-height: 1.6;
+            color: #555;
+        }
+
+        .cta-button {
+            display: inline-block;
+            padding: 12px 30px;
+            background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+            color: white;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(67, 97, 238, 0.3);
+            border: none;
+            cursor: pointer;
+            margin: 0 10px;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(67, 97, 238, 0.4);
+        }
+
+        .cta-button.secondary {
+            background: white;
+            color: var(--primary-color);
+            border: 2px solid var(--primary-color);
+        }
+
+        .features {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        .feature-card {
+            flex: 1 1 300px;
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }
+
+        .feature-title {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--dark-color);
+        }
+
+        .feature-desc {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem 1rem;
+            margin-top: 3rem;
+            background-color: var(--dark-color);
+            color: white;
+        }
+
+        @@keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @@media (max-width: 768px) {
+            .display-4 {
+                font-size: 2.5rem;
+            }
+
+            .lead {
+                font-size: 1.1rem;
+            }
+
+            .cta-buttons {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .cta-button {
+                display: block;
+                margin: 0.5rem auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="hero-section">
+        <h1 class="display-4">Welcome to Our Platform</h1>
+        <p class="lead">Build amazing web applications with ASP.NET Core. Our platform provides everything you need to create modern, scalable web applications quickly and efficiently.</p>
+        <div class="cta-buttons">
+            <a href="https://learn.microsoft.com/aspnet/core" class="cta-button">Get Started</a>
+            <a href="#" class="cta-button secondary">Learn More</a>
+        </div>
+    </div>
+
+    <div class="features">
+        <div class="feature-card">
+            <div class="feature-icon">🚀</div>
+            <h3 class="feature-title">Fast Development</h3>
+            <p class="feature-desc">Build applications quickly with powerful tools and extensive libraries that accelerate your development process.</p>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon">🔒</div>
+            <h3 class="feature-title">Secure by Default</h3>
+            <p class="feature-desc">Enterprise-grade security features built in to protect your applications from modern threats.</p>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon">🌐</div>
+            <h3 class="feature-title">Cross-Platform</h3>
+            <p class="feature-desc">Develop and deploy on Windows, macOS, and Linux for maximum flexibility.</p>
+        </div>
+    </div>
+
+    <footer>
+        <p>© @DateTime.Now.Year - Your ASP.NET Core Application</p>
+    </footer>
+</body>
+</html>

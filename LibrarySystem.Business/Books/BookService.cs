@@ -143,4 +143,19 @@ public class BookService : IBookService
 
         return new PaginatedResponse<BookDto>(result.TotalCount, result.Items.Select(x => x.Map()));
     }
+
+    public async Task<bool> GetIsBorrowedBookSpecificUserIdAsync(Guid userId, Guid bookId)
+    {
+        var user = await _userRepository.GetByIdAsync(userId);
+        if (user is null)
+            return false;
+
+        var book = await _bookRepository.GetByIdAsync(bookId);
+        if (book is null)
+            return false;
+
+        var borrowings = await _bookRepository.GetUserBorrowingsAsync(userId);
+
+        return borrowings.Where(x => x.ReturnedAt is null).Select(x => x.BookId).ToList().Contains(bookId);
+    }
 }

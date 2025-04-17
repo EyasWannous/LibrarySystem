@@ -3,55 +3,85 @@
     ViewData["Title"] = "Edit Book";
 }
 
-<div class="container mt-4">
-    <div class="card shadow-sm">
-        <div class="card-header bg-primary text-white">
-            <h2 class="h5 mb-0">Edit Book</h2>
-        </div>
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fas fa-check-circle me-2"></i>
+                    @TempData["SuccessMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
 
-        <div class="card-body">
-            <form asp-action="Edit">
-                <input type="hidden" asp-for="Id" />
-
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="form-floating mb-3">
-                            <input asp-for="Title" class="form-control" placeholder="Title" />
-                            <label asp-for="Title"></label>
-                            <span asp-validation-for="Title" class="text-danger small"></span>
-                        </div>
-
-                        <div class="form-floating mb-3">
-                            <input asp-for="Author" class="form-control" placeholder="Author" />
-                            <label asp-for="Author"></label>
-                            <span asp-validation-for="Author" class="text-danger small"></span>
-                        </div>
-                    </div>
-
-                    <div class="col-md-6">
-                        <div class="form-floating mb-3">
-                            <input asp-for="ISBN" class="form-control" placeholder="ISBN" />
-                            <label asp-for="ISBN"></label>
-                            <span asp-validation-for="ISBN" class="text-danger small"></span>
-                        </div>
+            <div class="card border-primary shadow-lg" style="border-radius: 1rem; overflow: hidden;">
+                <div class="card-header bg-primary text-white py-3">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-book-edit me-3 fs-4"></i>
+                        <h2 class="h4 mb-0 fw-bold">Edit Book Details</h2>
                     </div>
                 </div>
 
-                <div class="form-floating mb-3">
-                    <textarea asp-for="Description" class="form-control" placeholder="Description" style="height: 150px"></textarea>
-                    <label asp-for="Description"></label>
-                    <span asp-validation-for="Description" class="text-danger small"></span>
-                </div>
+                <div class="card-body p-4">
+                    <form asp-action="Edit" method="post" class="needs-validation" novalidate>
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" asp-for="Id" />
 
-                <div class="d-flex justify-content-between mt-4">
-                    <a asp-action="Index" class="btn btn-outline-secondary">
-                        <i class="fas fa-arrow-left me-1"></i> Cancel
-                    </a>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save me-1"></i> Save Changes
-                    </button>
+                        <div class="row g-4">
+                            <div class="col-md-12">
+                                <div class="form-floating">
+                                    <input asp-for="Title" class="form-control" placeholder="Title"
+                                           required minlength="5" maxlength="100" />
+                                    <label asp-for="Title" class="text-muted"></label>
+                                    <span asp-validation-for="Title" class="invalid-feedback"></span>
+                                    <small class="form-text text-muted">Must be between 5-100 characters</small>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input asp-for="Author" class="form-control" placeholder="Author"
+                                           required minlength="3" maxlength="50" />
+                                    <label asp-for="Author" class="text-muted"></label>
+                                    <span asp-validation-for="Author" class="invalid-feedback"></span>
+                                    <small class="form-text text-muted">Must be between 3-50 characters</small>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input asp-for="ISBN" class="form-control" placeholder="ISBN"
+                                           required minlength="10" maxlength="13" />
+                                    <label asp-for="ISBN" class="text-muted"></label>
+                                    <span asp-validation-for="ISBN" class="invalid-feedback"></span>
+                                    <small class="form-text text-muted">Must be 10-13 characters</small>
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="form-floating">
+                                    <textarea asp-for="Description" class="form-control" placeholder="Description"
+                                              style="height: 150px; resize: none;"
+                                              required minlength="10" maxlength="500"></textarea>
+                                    <label asp-for="Description" class="text-muted"></label>
+                                    <span asp-validation-for="Description" class="invalid-feedback"></span>
+                                    <small class="form-text text-muted">Must be between 10-500 characters</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-5 pt-3 border-top">
+                            <a asp-action="Index" class="btn btn-outline-secondary px-4 py-2">
+                                <i class="fas fa-times-circle me-2"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary px-4 py-2 shadow-sm" id="saveButton">
+                                <i class="fas fa-save me-2"></i> Update Book
+                            </button>
+                        </div>
+                    </form>
                 </div>
-            </form>
+            </div>
         </div>
     </div>
 </div>
@@ -60,4 +90,42 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+    <script>
+        // Enhanced validation with character counters
+        document.addEventListener('DOMContentLoaded', function() {
+            // Setup character counters
+            const setupCounter = (inputId, min, max) => {
+                const input = document.getElementById(inputId);
+                const counter = document.createElement('div');
+                counter.className = 'text-end small text-muted mt-1';
+                input.parentNode.appendChild(counter);
+
+                const updateCounter = () => {
+                    const length = input.value.length;
+                    counter.textContent = `${length}/${max}`;
+                    counter.className = `text-end small mt-1 ${length < min || length > max ? 'text-danger' : 'text-muted'}`;
+                };
+
+                input.addEventListener('input', updateCounter);
+                updateCounter();
+            };
+
+            // Initialize counters for each field
+            setupCounter('Title', 5, 100);
+            setupCounter('Author', 3, 50);
+            setupCounter('ISBN', 10, 13);
+            setupCounter('Description', 10, 500);
+
+            // Custom ISBN validation (optional)
+            const isbnInput = document.getElementById('ISBN');
+            isbnInput.addEventListener('blur', function() {
+                const isbn = this.value.replace(/-/g, '');
+                if (isbn.length >= 10 && !/^\d+$/.test(isbn)) {
+                    this.setCustomValidity('ISBN should contain only numbers and hyphens');
+                } else {
+                    this.setCustomValidity('');
+                }
+            });
+        });
+    </script>
 }

@@ -17,158 +17,356 @@
     var isbn = Context.Request.Query["ISBN"];
 }
 
-<div class="container mt-4">
+<style>
+    :root {
+        --primary-color: #4361ee;
+        --secondary-color: #3a0ca3;
+        --accent-color: #4cc9f0;
+        --success-color: #2ecc71;
+        --warning-color: #f39c12;
+        --danger-color: #e74c3c;
+        --light-color: #f8f9fa;
+        --dark-color: #212529;
+    }
+
+    body {
+        background-color: #f8fafc;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .book-card {
+        transition: all 0.3s ease;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        border: none;
+    }
+
+        .book-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+    .book-cover {
+        height: 180px;
+        background: linear-gradient(135deg, #e0e0e0 0%, #f5f5f5 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #777;
+    }
+
+        .book-cover i {
+            font-size: 3rem;
+        }
+
+    .book-status {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        font-size: 0.8rem;
+        padding: 5px 10px;
+        border-radius: 20px;
+    }
+
+    .available {
+        background-color: var(--success-color);
+    }
+
+    .borrowed {
+        background-color: var(--warning-color);
+    }
+
+    .search-card {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        padding: 20px;
+        margin-bottom: 30px;
+    }
+
+    .btn-primary {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+
+        .btn-primary:hover {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+
+    .page-item.active .page-link {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+
+    .page-link {
+        color: var(--primary-color);
+    }
+
+    .action-buttons .btn {
+        margin: 3px;
+        padding: 8px 12px;
+        font-size: 0.85rem;
+        white-space: nowrap;
+    }
+
+    .empty-state {
+        background: white;
+        border-radius: 10px;
+        padding: 40px;
+        text-align: center;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    }
+
+        .empty-state i {
+            font-size: 3rem;
+            color: #ccc;
+            margin-bottom: 20px;
+        }
+
+    .alert {
+        border-radius: 8px;
+    }
+
+    .pagination-info {
+        font-size: 0.9rem;
+        color: #666;
+    }
+
+    @@media (max-width: 768px) {
+        .book-card {
+            margin-bottom: 20px;
+        }
+
+        .action-buttons .btn {
+            display: block;
+            width: 100%;
+            margin-bottom: 5px;
+            white-space: normal;
+        }
+    }
+</style>
+
+<div class="container py-4">
+    <!-- Alerts -->
     @if (TempData["SuccessMessage"] != null)
     {
         <div class="alert alert-success alert-dismissible fade show" role="alert">
-            @TempData["SuccessMessage"]
+            <i class="fas fa-check-circle me-2"></i> @TempData["SuccessMessage"]
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     }
     @if (TempData["ErrorMessage"] != null)
     {
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            @TempData["ErrorMessage"]
+            <i class="fas fa-exclamation-circle me-2"></i> @TempData["ErrorMessage"]
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     }
 
+    <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>Book List</h1>
+        <h1 class="display-5 fw-bold text-primary">
+            <i class="fas fa-book-open me-2"></i>Book Collection
+        </h1>
         @if (User.Identity?.IsAuthenticated ?? false)
         {
-            <a asp-action="Create" class="btn btn-success">
-                <i class="fas fa-plus me-1"></i> Create New
+            <a asp-action="Create" class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i> Add New Book
             </a>
         }
     </div>
 
-    <form asp-action="Search" method="get" class="mb-4">
-        <div class="row g-3">
-            <div class="col-md-3">
-                <input name="Title" class="form-control" placeholder="Search by title" value="@title" />
-            </div>
-            <div class="col-md-3">
-                <input name="Author" class="form-control" placeholder="Search by author" value="@author" />
-            </div>
-            <div class="col-md-3">
-                <input name="ISBN" class="form-control" placeholder="Search by ISBN" value="@isbn" />
-            </div>
-            <div class="col-md-3">
-                <div class="d-flex">
-                    <button type="submit" class="btn btn-primary me-2">Search</button>
-                    <a asp-action="Index" class="btn btn-outline-secondary">Clear</a>
+    <!-- Search Card -->
+    <div class="search-card">
+        <form asp-action="Search" method="get">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <div class="form-floating">
+                        <input name="Title" class="form-control" placeholder=" " value="@title" id="titleInput">
+                        <label for="titleInput">Search by title</label>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-floating">
+                        <input name="Author" class="form-control" placeholder=" " value="@author" id="authorInput">
+                        <label for="authorInput">Search by author</label>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-floating">
+                        <input name="ISBN" class="form-control" placeholder=" " value="@isbn" id="isbnInput">
+                        <label for="isbnInput">Search by ISBN</label>
+                    </div>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <div class="d-flex w-100">
+                        <button type="submit" class="btn btn-primary me-2 flex-grow-1">
+                            <i class="fas fa-search me-1"></i> Search
+                        </button>
+                        <a asp-action="Index" class="btn btn-outline-secondary">
+                            <i class="fas fa-undo me-1"></i> Clear
+                        </a>
+                    </div>
                 </div>
             </div>
-        </div>
-        <input type="hidden" name="Skip" value="@skip" />
-        <input type="hidden" name="Take" value="@take" />
-    </form>
+            <input type="hidden" name="Skip" value="@skip" />
+            <input type="hidden" name="Take" value="@take" />
+        </form>
+    </div>
 
     @if (Model?.Items?.Any() ?? false)
     {
-        <div class="table-responsive">
-            <table class="table table-striped table-hover">
-                <thead class="table-dark">
-                    <tr>
-                        <th>Title</th>
-                        <th>Author</th>
-                        <th>ISBN</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var item in Model.Items)
-                    {
-                        <tr>
-                            <td>@item.Title</td>
-                            <td>@item.Author</td>
-                            <td>@item.ISBN</td>
-                            <td>
-                                <span class="badge @(item.IsBorrowed ? "bg-warning" : "bg-success")">
-                                    @(item.IsBorrowed ? "Borrowed" : "Available")
-                                </span>
-                            </td>
-                            <td>
-                                <div class="btn-group" role="group">
-                                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-info btn-sm">
-                                        <i class="fas fa-eye"></i> Details
+        <!-- Book Cards -->
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4">
+            @foreach (var item in Model.Items)
+            {
+                <div class="col">
+                    <div class="card h-100 book-card">
+                        <div class="book-cover position-relative">
+                            <i class="fas fa-book"></i>
+                            <span class="book-status @(item.IsBorrowed ? "borrowed" : "available") text-white">
+                                @(item.IsBorrowed ? "Borrowed" : "Available")
+                            </span>
+                        </div>
+                        <div class="card-body">
+                            <h5 class="card-title">@item.Title</h5>
+                            <p class="card-text text-muted">
+                                <i class="fas fa-user-edit me-1"></i> @item.Author
+                            </p>
+                            <p class="card-text">
+                                <small class="text-muted">
+                                    <i class="fas fa-barcode me-1"></i> @item.ISBN
+                                </small>
+                            </p>
+                        </div>
+                        <div class="card-footer bg-white border-0 action-buttons">
+                            <div class="d-flex flex-wrap justify-content-center">
+                                <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-info">
+                                    <i class="fas fa-eye me-1"></i> View
+                                </a>
+
+                                @if (User.Identity?.IsAuthenticated ?? false)
+                                {
+                                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-warning">
+                                        <i class="fas fa-edit me-1"></i> Edit
+                                    </a>
+                                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger">
+                                        <i class="fas fa-trash me-1"></i> Delete
                                     </a>
 
-                                    @if (User.Identity?.IsAuthenticated ?? false)
+                                    @if (item.IsBorrowed)
                                     {
-                                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-warning btn-sm">
-                                            <i class="fas fa-edit"></i> Edit
-                                        </a>
-                                        <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-danger btn-sm">
-                                            <i class="fas fa-trash"></i> Delete
-                                        </a>
-
-                                        @if (item.IsBorrowed)
-                                        {
-                                            <form asp-action="Return" asp-route-id="@item.Id" method="post" class="d-inline">
-                                                @Html.AntiForgeryToken()
-                                                <button type="submit" class="btn btn-success btn-sm">
-                                                    <i class="fas fa-undo"></i> Return
-                                                </button>
-                                            </form>
-                                        }
-                                        else
-                                        {
-                                            <form asp-action="Borrow" asp-route-id="@item.Id" method="post" class="d-inline">
-                                                @Html.AntiForgeryToken()
-                                                <button type="submit" class="btn btn-primary btn-sm">
-                                                    <i class="fas fa-book-reader"></i> Borrow
-                                                </button>
-                                            </form>
-                                        }
+                                        <form asp-action="Return" asp-route-id="@item.Id" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-sm btn-outline-success">
+                                                <i class="fas fa-undo me-1"></i> Return
+                                            </button>
+                                        </form>
                                     }
-                                </div>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+                                    else
+                                    {
+                                        <form asp-action="Borrow" asp-route-id="@item.Id" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-book-reader me-1"></i> Borrow
+                                            </button>
+                                        </form>
+                                    }
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
         </div>
 
-        <nav aria-label="Page navigation" class="mt-4">
-            <ul class="pagination justify-content-center">
-                <li class="page-item @(currentPage == 1 ? "disabled" : "")">
-                    <a class="page-link" href="@Url.Action("Index", new { Skip = skip - take, Take = take, Title = title, Author = author, ISBN = isbn })">
-                        Previous
-                    </a>
-                </li>
+        <!-- Pagination -->
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mt-4 py-3 px-3 bg-white rounded shadow-sm">
+            <div class="pagination-info mb-3 mb-md-0">
+                <span class="text-muted">
+                    <i class="fas fa-book me-1"></i>
+                    Showing @(skip + 1) to @Math.Min(skip + take, Model.TotalCount) of @Model.TotalCount books
+                </span>
+            </div>
 
-                @for (int i = startPage; i <= endPage; i++)
-                {
-                    <li class="page-item @(i == currentPage ? "active" : "")">
-                        <a class="page-link" href="@Url.Action("Index", new { Skip = (i - 1) * take, Take = take, Title = title, Author = author, ISBN = isbn })">
-                            @i
+            <nav aria-label="Page navigation">
+                <ul class="pagination mb-0" style="font-size: 1.05rem;">
+                    <!-- Increased font size -->
+                    <!-- Previous Button -->
+                    <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                        <a class="page-link px-3 py-2" href="@Url.Action("Index", new { Skip = skip - take, Take = take, Title = title, Author = author, ISBN = isbn })" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
                         </a>
                     </li>
-                }
 
-                <li class="page-item @(currentPage >= totalPages ? "disabled" : "")">
-                    <a class="page-link" href="@Url.Action("Index", new { Skip = skip + take, Take = take, Title = title, Author = author, ISBN = isbn })">
-                        Next
-                    </a>
-                </li>
-            </ul>
-        </nav>
+                    <!-- First Page -->
+                    @if (startPage > 1)
+                    {
+                        <li class="page-item">
+                            <a class="page-link px-3 py-2" href="@Url.Action("Index", new { Skip = 0, Take = take, Title = title, Author = author, ISBN = isbn })">1</a>
+                        </li>
+                        @if (startPage > 2)
+                        {
+                            <li class="page-item disabled">
+                                <a class="page-link px-3 py-2" href="#" tabindex="-1" aria-disabled="true">...</a>
+                            </li>
+                        }
+                    }
 
-        <div class="text-center text-muted mt-2">
-            Showing items @(skip + 1) to @Math.Min(skip + take, Model.TotalCount) of @Model.TotalCount
+                    <!-- Page Numbers -->
+                    @for (int i = startPage; i <= endPage; i++)
+                    {
+                        <li class="page-item @(i == currentPage ? "active" : "")">
+                            <a class="page-link px-3 py-2" href="@Url.Action("Index", new { Skip = (i - 1) * take, Take = take, Title = title, Author = author, ISBN = isbn })">
+                                @i
+                            </a>
+                        </li>
+                    }
+
+                    <!-- Last Page -->
+                    @if (endPage < totalPages)
+                    {
+                        @if (endPage < totalPages - 1)
+                        {
+                            <li class="page-item disabled">
+                                <a class="page-link px-3 py-2" href="#" tabindex="-1" aria-disabled="true">...</a>
+                            </li>
+                        }
+                        <li class="page-item">
+                            <a class="page-link px-3 py-2" href="@Url.Action("Index", new { Skip = (totalPages - 1) * take, Take = take, Title = title, Author = author, ISBN = isbn })">
+                                @totalPages
+                            </a>
+                        </li>
+                    }
+
+                    <!-- Next Button -->
+                    <li class="page-item @(currentPage >= totalPages ? "disabled" : "")">
+                        <a class="page-link px-3 py-2" href="@Url.Action("Index", new { Skip = skip + take, Take = take, Title = title, Author = author, ISBN = isbn })" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
         </div>
     }
     else
     {
-        <div class="alert alert-info">
-            No books found.
-            @if (User.Identity?.IsAuthenticated ?? false)
-            {
-                <span>Would you like to <a asp-action="Create" class="alert-link">add a new book</a>?</span>
-            }
+        <!-- Empty State -->
+        <div class="empty-state">
+            <i class="fas fa-book-open"></i>
+            <h3 class="text-muted">No books found</h3>
+            <p class="text-muted">
+                @if (User.Identity?.IsAuthenticated ?? false)
+                {
+                    <span>Would you like to <a asp-action="Create" class="text-primary">add a new book</a>?</span>
+                }
+                else
+                {
+                    <span>Try adjusting your search criteria</span>
+                }
+            </p>
         </div>
     }
 </div>

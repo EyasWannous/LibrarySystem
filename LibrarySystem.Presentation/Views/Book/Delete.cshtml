@@ -3,52 +3,94 @@
     ViewData["Title"] = "Delete Book";
 }
 
-<div class="container mt-4">
-    <div class="card shadow-sm border-danger">
-        <div class="card-header bg-danger text-white">
-            <h2 class="h5 mb-0">Delete Book</h2>
+<div class="container py-4">
+    <div class="card border-danger shadow-lg" style="border-radius: 0.75rem; overflow: hidden;">
+        <div class="card-header bg-danger text-white py-3">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-exclamation-triangle me-2 fs-4"></i>
+                <h2 class="h4 mb-0 fw-bold">Delete Book Confirmation</h2>
+            </div>
         </div>
 
-        <div class="card-body">
-            <div class="alert alert-warning">
-                <h4 class="alert-heading">Warning!</h4>
-                <p>Are you sure you want to permanently delete this book?</p>
-                <hr>
-                <p class="mb-0">This action cannot be undone.</p>
-            </div>
-
-            <div class="row">
-                <div class="col-md-6">
-                    <h4>@Model.Title</h4>
-                    <dl class="row mt-3">
-                        <dt class="col-sm-4">Author:</dt>
-                        <dd class="col-sm-8">@Model.Author</dd>
-
-                        <dt class="col-sm-4">ISBN:</dt>
-                        <dd class="col-sm-8">@Model.ISBN</dd>
-
-                        <dt class="col-sm-4">Status:</dt>
-                        <dd class="col-sm-8">
-                            <span class="badge @(Model.IsBorrowed ? "bg-warning" : "bg-success")">
-                                @(Model.IsBorrowed ? "Borrowed" : "Available")
-                            </span>
-                        </dd>
-                    </dl>
+        <div class="card-body p-4">
+            <div class="alert alert-danger bg-danger-soft border-danger d-flex align-items-center">
+                <i class="fas fa-exclamation-circle fs-4 me-3 text-danger"></i>
+                <div>
+                    <h4 class="alert-heading fw-bold">Warning! Destructive Action</h4>
+                    <p class="mb-1">You are about to permanently delete this book from the library system.</p>
+                    <p class="mb-0">This action cannot be undone and will remove all associated records.</p>
                 </div>
             </div>
 
-            <form asp-action="Delete" method="post">
+            <div class="row mt-4">
+                <div class="col-md-8 mx-auto">
+                    <div class="book-details p-4 bg-light rounded-3">
+                        <div class="text-center mb-4">
+                            <i class="fas fa-book-open text-danger fs-1 mb-3"></i>
+                            <h3 class="fw-bold text-danger">"@Model.Title"</h3>
+                            <p class="text-muted">by @Model.Author</p>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="detail-item mb-3">
+                                    <span class="fw-bold text-muted d-block">ISBN:</span>
+                                    <span class="fs-5">@Model.ISBN</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="detail-item mb-3">
+                                    <span class="fw-bold text-muted d-block">Current Status:</span>
+                                    <span class="badge @(Model.IsBorrowed ? "bg-warning text-dark" : "bg-success") p-2 fs-6">
+                                        @(Model.IsBorrowed ? "Currently Borrowed" : "Available in Library")
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <form asp-action="Delete" method="post" class="mt-5">
                 @Html.AntiForgeryToken()
                 <input type="hidden" asp-for="Id" />
-                <div class="d-flex justify-content-between">
-                    <a asp-action="Index" class="btn btn-outline-secondary">
-                        <i class="fas fa-arrow-left me-1"></i> Cancel
+                <div class="d-flex justify-content-center gap-3">
+                    <a asp-action="Index" class="btn btn-outline-secondary px-4 py-2">
+                        <i class="fas fa-arrow-circle-left me-2"></i> Back to Safety
                     </a>
-                    <button type="submit" class="btn btn-danger">
-                        <i class="fas fa-trash-alt me-1"></i> Confirm Delete
+                    <button type="submit" class="btn btn-danger px-4 py-2 shadow-sm" id="deleteButton">
+                        <i class="fas fa-trash-alt me-2"></i> Permanently Delete
                     </button>
                 </div>
             </form>
         </div>
     </div>
 </div>
+
+<style>
+    .book-details {
+        border-left: 4px solid #dc3545;
+        transition: all 0.3s ease;
+    }
+
+        .book-details:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(220, 53, 69, 0.1);
+        }
+
+    .detail-item {
+        padding: 0.75rem;
+        background: white;
+        border-radius: 0.5rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    #deleteButton {
+        transition: all 0.2s;
+    }
+
+        #deleteButton:hover {
+            transform: scale(1.02);
+            box-shadow: 0 0 10px rgba(220, 53, 69, 0.5);
+        }
+</style>

@@ -49,10 +49,19 @@ public class BookController : Controller
     public async Task<IActionResult> Details(Guid id)
     {
         var book = await _bookService.GetByIdAsync(id);
-        if (book == null)
-        {
+        if (book is null)
             return NotFound();
+
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!string.IsNullOrEmpty(userId) && Guid.TryParse(userId, out var parsedUserId))
+        {
+            ViewBag.IsBorrowedByMe = await _bookService.GetIsBorrowedBookSpecificUserIdAsync(parsedUserId, id);
         }
+        else
+        {
+            ViewBag.IsBorrowedByMe = false;
+        }
+
         return View(book);
     }
 
@@ -206,4 +215,20 @@ public class BookController : Controller
 
         return View(books);
     }
+
+    [HttpGet]
+    public async Task<IActionResult> IsBorrowedByMe(Guid bookId)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId) || !Guid.TryParse(userId, out var parsedUserId))
+        {
+            return Unauthorized();
+        }
+
+        var isBorrowedByMe = await _bookService.GetIsBorrowedBookSpecificUserIdAsync(parsedUserId, bookId);
+
+        return Json(new { isBorrowedByMe });
+    }
+
+
 }

@@ -6,6 +6,7 @@ using LibrarySystem.BusinessLogic.Users;
 using LibrarySystem.Data.Books;
 using LibrarySystem.Data.Migrations;
 using LibrarySystem.Data.Users;
+using LibrarySystem.Presentation.Middlewares;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Npgsql;
@@ -72,6 +73,9 @@ builder.Services.AddAuthentication(options =>
     options.ExpireTimeSpan = jwtOptions.ExpireTime;
 });
 
+builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -106,5 +110,6 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}")
     .WithStaticAssets();
 
+app.UseExceptionHandler();
 
 app.Run();

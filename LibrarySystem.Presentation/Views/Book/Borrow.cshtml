@@ -1,26 +1,95 @@
-﻿@model LibrarySystem.Presentation.Models.BorrowViewModel
+﻿@* TODO: to be deleted *@
+
+@model LibrarySystem.Presentation.Models.BorrowViewModel
 @{
     ViewData["Title"] = "Borrow Book";
 }
 
-<div class="container mt-4">
-    <div class="card shadow-sm">
-        <div class="card-header bg-primary text-white">
-            <h2 class="h5 mb-0">Confirm Book Borrow</h2>
-        </div>
-        <div class="card-body">
-            <p>Are you sure you want to borrow this book?</p>
-            <form asp-action="Borrow">
-                <input type="hidden" asp-for="BookId" />
-                <div class="d-flex justify-content-between mt-4">
-                    <a asp-action="Details" asp-route-id="@Model.BookId" class="btn btn-outline-secondary">
-                        <i class="fas fa-arrow-left me-1"></i> Back to Details
-                    </a>
-                    <button type="submit" class="btn btn-success">
-                        <i class="fas fa-check me-1"></i> Confirm Borrow
-                    </button>
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-success shadow-lg" style="border-radius: 1rem; overflow: hidden; border-width: 2px;">
+                <div class="card-header bg-success text-white py-3">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-hand-holding-book me-3 fs-4"></i>
+                        <h2 class="h4 mb-0 fw-bold">Confirm Book Borrow</h2>
+                    </div>
                 </div>
-            </form>
+
+                <div class="card-body p-4">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-book-reader text-success mb-3" style="font-size: 3rem;"></i>
+                        <h3 class="fw-bold">Ready to borrow this book?</h3>
+                        <p class="lead text-muted">Please confirm your borrowing request below</p>
+                    </div>
+
+                    <div class="alert bg-success-soft border-success d-flex align-items-center mb-4">
+                        <i class="fas fa-info-circle text-success me-3 fs-4"></i>
+                        <div>
+                            <h4 class="alert-heading fw-bold">Borrowing Information</h4>
+                            <p class="mb-1">You'll be responsible for returning this book by the due date.</p>
+                            <p class="mb-0">Enjoy your reading experience!</p>
+                        </div>
+                    </div>
+
+                    <form asp-action="Borrow" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" asp-for="BookId" />
+
+                        <div class="d-flex justify-content-between mt-4 pt-3 border-top">
+                            <a asp-action="Details" asp-route-id="@Model.BookId" class="btn btn-outline-secondary px-4 py-2">
+                                <i class="fas fa-arrow-circle-left me-2"></i> Back to Details
+                            </a>
+                            <button type="submit" class="btn btn-success px-4 py-2 shadow-sm" id="confirmButton">
+                                <i class="fas fa-check-circle me-2"></i> Confirm Borrow
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
 </div>
+
+<style>
+    .bg-success-soft {
+        background-color: rgba(25, 135, 84, 0.1);
+    }
+
+    #confirmButton {
+        transition: all 0.3s ease;
+    }
+
+        #confirmButton:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(25, 135, 84, 0.3);
+        }
+
+    .card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+    .border-success {
+        border-color: rgba(25, 135, 84, 0.5) !important;
+    }
+</style>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add animation to the confirmation button on hover
+            const confirmBtn = document.getElementById('confirmButton');
+            confirmBtn.addEventListener('mouseenter', function() {
+                this.querySelector('i').classList.add('fa-bounce');
+            });
+            confirmBtn.addEventListener('mouseleave', function() {
+                this.querySelector('i').classList.remove('fa-bounce');
+            });
+        });
+    </script>
+}
