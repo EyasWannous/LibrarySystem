@@ -35,19 +35,16 @@ public class BookRepositoryTests : IAsyncLifetime
     }
     public async Task InitializeAsync()
     {
-        // Create fresh connection
         _connection = new NpgsqlConnection("Host=localhost;Port=5432;Database=library_test;Username=Titan;Password=Titan");
         await _connection.OpenAsync();
         _repository = new BookRepository(_connection);
 
-        // Create schema (no transactions)
         await CreateTestSchema();
         await InsertTestData();
     }
 
     public async Task DisposeAsync()
     {
-        // Clean tables without transactions
         await using var cmd = new NpgsqlCommand(@"
             TRUNCATE TABLE borrowings, books, users RESTART IDENTITY CASCADE;
         ", _connection);
@@ -94,7 +91,6 @@ public class BookRepositoryTests : IAsyncLifetime
 
     private async Task InsertTestData()
     {
-        // Insert test user
         _testUserId = Guid.NewGuid();
         await using (var cmd = new NpgsqlCommand(@"
             INSERT INTO users (id, first_name, last_name, email, phone_number, password_hash)
@@ -104,7 +100,6 @@ public class BookRepositoryTests : IAsyncLifetime
             await cmd.ExecuteNonQueryAsync();
         }
 
-        // Insert test books
         _testBookId1 = Guid.NewGuid();
         _testBookId2 = Guid.NewGuid();
         await using (var cmd = new NpgsqlCommand(@"
@@ -121,10 +116,8 @@ public class BookRepositoryTests : IAsyncLifetime
     [Fact]
     public async Task GetByIdAsync_ReturnsBook_WhenExists()
     {
-        // Act
         var result = await _repository.GetByIdAsync(_testBookId1);
 
-        // Assert
         Assert.NotNull(result);
         Assert.Equal("Test Book 1", result.Title);
         Assert.Equal("Author 1", result.Author);
@@ -133,27 +126,22 @@ public class BookRepositoryTests : IAsyncLifetime
     [Fact]
     public async Task GetByIdAsync_ReturnsNull_WhenNotExists()
     {
-        // Act
         var result = await _repository.GetByIdAsync(Guid.NewGuid());
 
-        // Assert
         Assert.Null(result);
     }
 
     [Fact]
     public async Task GetListAsync_ReturnsAllActiveBooks()
     {
-        // Act
         var result = await _repository.GetListAsync();
 
-        // Assert
         Assert.Equal(2, result.Count());
     }
 
     [Fact]
     public async Task InsertAsync_AddsNewBook()
     {
-        // Arrange
         var newBook = new Book(
             Guid.NewGuid(),
             "New Book Description",
@@ -162,11 +150,9 @@ public class BookRepositoryTests : IAsyncLifetime
             "3333333333333"
         );
 
-        // Act
         await _repository.InsertAsync(newBook);
         var result = await _repository.GetByIdAsync(newBook.Id);
 
-        // Assert
         Assert.NotNull(result);
         Assert.Equal("New Book Title", result.Title);
     }
@@ -174,7 +160,6 @@ public class BookRepositoryTests : IAsyncLifetime
     [Fact]
     public async Task UpdateAsync_ModifiesExistingBook()
     {
-        // Arrange
         var book = await _repository.GetByIdAsync(_testBookId1);
         var updateBook = new Book(
             book!.Id,
@@ -184,42 +169,34 @@ public class BookRepositoryTests : IAsyncLifetime
             book.ISBN
         );
 
-        // Act
         await _repository.UpdateAsync(updateBook);
         var updatedBook = await _repository.GetByIdAsync(_testBookId1);
 
-        // Assert
         Assert.Equal("Updated Title", updatedBook!.Title);
     }
 
     [Fact]
     public async Task DeleteAsync_MarksBookAsDeleted()
     {
-        // Act
         await _repository.DeleteAsync(_testBookId1);
         var result = await _repository.GetByIdAsync(_testBookId1);
 
-        // Assert
         Assert.Null(result);
     }
 
     [Fact]
     public async Task CountAsync_ReturnsCorrectCount()
     {
-        // Act
         var count = await _repository.CountAsync();
 
-        // Assert
         Assert.Equal(2, count);
     }
 
     [Fact]
     public async Task GetPaginateAsync_ReturnsPaginatedResults()
     {
-        // Act
         var result = await _repository.GetPaginateAsync(skip: 1, take: 1);
 
-        // Assert
         Assert.Single(result.Items);
         Assert.Equal(2, result.TotalCount);
     }
@@ -227,7 +204,6 @@ public class BookRepositoryTests : IAsyncLifetime
     [Fact]
     public async Task SearchAsync_FiltersByTitle()
     {
-        // Act - explicitly cast parameters
         var result = await _repository.SearchAsync(
             title: "Book 1",
             author: null,
@@ -236,7 +212,6 @@ public class BookRepositoryTests : IAsyncLifetime
             take: 10
         );
 
-        // Assert
         Assert.Single(result.Items);
         Assert.Equal("Test Book 1", result.Items.First().Title);
     }
@@ -244,15 +219,12 @@ public class BookRepositoryTests : IAsyncLifetime
     [Fact]
     public async Task BorrowBookAsync_CreatesBorrowingAndUpdatesBookStatus()
     {
-        // Arrange - get a fresh connection without transaction
         using var separateConnection = new NpgsqlConnection("Host=localhost;Port=5432;Database=library_test;Username=Titan;Password=Titan");
         await separateConnection.OpenAsync();
         var separateRepo = new BookRepository(separateConnection);
 
-        // Act
         var borrowing = await separateRepo.BorrowBookAsync(_testUserId, _testBookId1);
 
-        // Assert
         var book = await separateRepo.GetByIdAsync(_testBookId1);
         Assert.True(book!.IsBorrowed);
 
@@ -263,18 +235,14 @@ public class BookRepositoryTests : IAsyncLifetime
     [Fact]
     public async Task ReturnBookAsync_UpdatesBorrowingAndBookStatus()
     {
-        // Arrange - get a fresh connection without transaction
         using var separateConnection = new NpgsqlConnection("Host=localhost;Port=5432;Database=library_test;Username=Titan;Password=Titan");
         await separateConnection.OpenAsync();
         var separateRepo = new BookRepository(separateConnection);
 
-        // Arrange
         var borrowing = await separateRepo.BorrowBookAsync(_testUserId, _testBookId1);
 
-        // Act
         await separateRepo.ReturnBookAsync(_testUserId, borrowing.Id);
 
-        // Assert
         var book = await separateRepo.GetByIdAsync(_testBookId1);
         Assert.False(book!.IsBorrowed);
 
@@ -286,19 +254,15 @@ public class BookRepositoryTests : IAsyncLifetime
     [Fact]
     public async Task GetUserBorrowingsAsync_ReturnsAllUserBorrowings()
     {
-        // Arrange - get a fresh connection without transaction
         using var separateConnection = new NpgsqlConnection("Host=localhost;Port=5432;Database=library_test;Username=Titan;Password=Titan");
         await separateConnection.OpenAsync();
         var separateRepo = new BookRepository(separateConnection);
 
-        // Arrange
         var borrowing1 = await separateRepo.BorrowBookAsync(_testUserId, _testBookId1);
         var borrowing2 = await separateRepo.BorrowBookAsync(_testUserId, _testBookId2);
 
-        // Act
         var borrowings = await separateRepo.GetUserBorrowingsAsync(_testUserId);
 
-        // Assert
         Assert.Equal(2, borrowings.Count());
         Assert.Contains(borrowings, b => b.BookId == _testBookId1);
         Assert.Contains(borrowings, b => b.BookId == _testBookId2);

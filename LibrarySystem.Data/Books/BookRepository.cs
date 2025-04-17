@@ -18,21 +18,21 @@ public class BookRepository : IBookRepository
     {
         const string sql = "SELECT COUNT(*) FROM books WHERE is_deleted = false";
 
-        using var cmd = new NpgsqlCommand(sql, _db);
+        using var command = new NpgsqlCommand(sql, _db);
         await EnsureConnectionOpen();
 
-        return Convert.ToInt32(await cmd.ExecuteScalarAsync());
+        return Convert.ToInt32(await command.ExecuteScalarAsync());
     }
 
     public async Task DeleteAsync(Guid id)
     {
         const string sql = "UPDATE books SET is_deleted = true WHERE id = @id";
 
-        using var cmd = new NpgsqlCommand(sql, _db);
-        cmd.Parameters.AddWithValue("@id", id);
+        using var command = new NpgsqlCommand(sql, _db);
+        command.Parameters.AddWithValue("@id", id);
 
         await EnsureConnectionOpen();
-        await cmd.ExecuteNonQueryAsync();
+        await command.ExecuteNonQueryAsync();
     }
 
     public async Task<Book?> GetByIdAsync(Guid id)
@@ -41,12 +41,12 @@ public class BookRepository : IBookRepository
                            FROM books 
                            WHERE id = @id AND is_deleted = false";
 
-        using var cmd = new NpgsqlCommand(sql, _db);
-        cmd.Parameters.AddWithValue("@id", id);
+        using var command = new NpgsqlCommand(sql, _db);
+        command.Parameters.AddWithValue("@id", id);
 
         await EnsureConnectionOpen();
 
-        using var reader = await cmd.ExecuteReaderAsync();
+        using var reader = await command.ExecuteReaderAsync();
         if (await reader.ReadAsync())
         {
             var book = new Book(
@@ -73,11 +73,11 @@ public class BookRepository : IBookRepository
                            FROM books 
                            WHERE is_deleted = false";
 
-        using var cmd = new NpgsqlCommand(sql, _db);
+        using var command = new NpgsqlCommand(sql, _db);
 
         await EnsureConnectionOpen();
 
-        using var reader = await cmd.ExecuteReaderAsync();
+        using var reader = await command.ExecuteReaderAsync();
         while (await reader.ReadAsync())
         {
             var book = new Book(
@@ -110,13 +110,13 @@ public class BookRepository : IBookRepository
                            FROM books 
                            WHERE is_deleted = false";
 
-        using var cmd = new NpgsqlCommand(sql, _db);
-        cmd.Parameters.AddWithValue("@skip", skip);
-        cmd.Parameters.AddWithValue("@take", take);
+        using var command = new NpgsqlCommand(sql, _db);
+        command.Parameters.AddWithValue("@skip", skip);
+        command.Parameters.AddWithValue("@take", take);
 
         await EnsureConnectionOpen();
 
-        using var reader = await cmd.ExecuteReaderAsync();
+        using var reader = await command.ExecuteReaderAsync();
         while (await reader.ReadAsync())
         {
             var book = new Book(
@@ -146,17 +146,17 @@ public class BookRepository : IBookRepository
                            VALUES 
                            (@id, @title, @description, @author, @isbn, @isBorrowed, @createdAt, false)";
 
-        using var cmd = new NpgsqlCommand(sql, _db);
-        cmd.Parameters.AddWithValue("@id", entity.Id);
-        cmd.Parameters.AddWithValue("@title", entity.Title);
-        cmd.Parameters.AddWithValue("@description", entity.Description);
-        cmd.Parameters.AddWithValue("@author", entity.Author);
-        cmd.Parameters.AddWithValue("@isbn", entity.ISBN);
-        cmd.Parameters.AddWithValue("@isBorrowed", entity.IsBorrowed);
-        cmd.Parameters.AddWithValue("@createdAt", entity.CreatedAt);
+        using var command = new NpgsqlCommand(sql, _db);
+        command.Parameters.AddWithValue("@id", entity.Id);
+        command.Parameters.AddWithValue("@title", entity.Title);
+        command.Parameters.AddWithValue("@description", entity.Description);
+        command.Parameters.AddWithValue("@author", entity.Author);
+        command.Parameters.AddWithValue("@isbn", entity.ISBN);
+        command.Parameters.AddWithValue("@isBorrowed", entity.IsBorrowed);
+        command.Parameters.AddWithValue("@createdAt", entity.CreatedAt);
 
         await EnsureConnectionOpen();
-        await cmd.ExecuteNonQueryAsync();
+        await command.ExecuteNonQueryAsync();
     }
 
     public async Task<PaginatedResponse<Book>> SearchAsync(
@@ -184,29 +184,29 @@ public class BookRepository : IBookRepository
                        AND (@author IS NULL OR author ILIKE @author)
                        AND (@isbn IS NULL OR isbn ILIKE @isbn)";
 
-        await using var cmd = new NpgsqlCommand(sql, _db);
+        await using var command = new NpgsqlCommand(sql, _db);
 
-        cmd.Parameters.Add(new NpgsqlParameter("@title", NpgsqlDbType.Text)
+        command.Parameters.Add(new NpgsqlParameter("@title", NpgsqlDbType.Text)
         {
             Value = string.IsNullOrWhiteSpace(title) ? DBNull.Value : $"%{title}%"
         });
 
-        cmd.Parameters.Add(new NpgsqlParameter("@author", NpgsqlDbType.Text)
+        command.Parameters.Add(new NpgsqlParameter("@author", NpgsqlDbType.Text)
         {
             Value = string.IsNullOrWhiteSpace(author) ? DBNull.Value : $"%{author}%"
         });
 
-        cmd.Parameters.Add(new NpgsqlParameter("@isbn", NpgsqlDbType.Text)
+        command.Parameters.Add(new NpgsqlParameter("@isbn", NpgsqlDbType.Text)
         {
             Value = string.IsNullOrWhiteSpace(isbn) ? DBNull.Value : $"%{isbn}%"
         });
 
-        cmd.Parameters.AddWithValue("@skip", skip);
-        cmd.Parameters.AddWithValue("@take", take);
+        command.Parameters.AddWithValue("@skip", skip);
+        command.Parameters.AddWithValue("@take", take);
 
         await EnsureConnectionOpen();
 
-        await using var reader = await cmd.ExecuteReaderAsync();
+        await using var reader = await command.ExecuteReaderAsync();
         while (await reader.ReadAsync())
         {
             var book = new Book(
@@ -239,16 +239,16 @@ public class BookRepository : IBookRepository
                                    is_borrowed = @isBorrowed
                                WHERE id = @id AND is_deleted = false";
 
-        using var cmd = new NpgsqlCommand(sql, _db);
-        cmd.Parameters.AddWithValue("@id", entity.Id);
-        cmd.Parameters.AddWithValue("@title", entity.Title);
-        cmd.Parameters.AddWithValue("@description", entity.Description);
-        cmd.Parameters.AddWithValue("@author", entity.Author);
-        cmd.Parameters.AddWithValue("@isbn", entity.ISBN);
-        cmd.Parameters.AddWithValue("@isBorrowed", entity.IsBorrowed);
+        using var command = new NpgsqlCommand(sql, _db);
+        command.Parameters.AddWithValue("@id", entity.Id);
+        command.Parameters.AddWithValue("@title", entity.Title);
+        command.Parameters.AddWithValue("@description", entity.Description);
+        command.Parameters.AddWithValue("@author", entity.Author);
+        command.Parameters.AddWithValue("@isbn", entity.ISBN);
+        command.Parameters.AddWithValue("@isBorrowed", entity.IsBorrowed);
 
         await EnsureConnectionOpen();
-        await cmd.ExecuteNonQueryAsync();
+        await command.ExecuteNonQueryAsync();
     }
 
     public async Task<Borrowing> BorrowBookAsync(Guid userId, Guid bookId)
@@ -260,12 +260,12 @@ public class BookRepository : IBookRepository
             const string checkBookSql = @"SELECT is_borrowed FROM books 
                                     WHERE id = @bookId AND is_deleted = false FOR UPDATE";
 
-            await using var checkCmd = new NpgsqlCommand(checkBookSql, _db, transaction);
-            checkCmd.Parameters.AddWithValue("@bookId", bookId);
+            await using var checkCommand = new NpgsqlCommand(checkBookSql, _db, transaction);
+            checkCommand.Parameters.AddWithValue("@bookId", bookId);
 
             await EnsureConnectionOpen();
 
-            var isBorrowed = (bool?)await checkCmd.ExecuteScalarAsync();
+            var isBorrowed = (bool?)await checkCommand.ExecuteScalarAsync();
 
             if (isBorrowed is null)
                 throw new Exception("Book not found");
@@ -275,10 +275,10 @@ public class BookRepository : IBookRepository
 
             const string updateBookSql = "UPDATE books SET is_borrowed = true WHERE id = @bookId";
 
-            await using var updateBookCmd = new NpgsqlCommand(updateBookSql, _db, transaction);
-            updateBookCmd.Parameters.AddWithValue("@bookId", bookId);
+            await using var updateBookCommand = new NpgsqlCommand(updateBookSql, _db, transaction);
+            updateBookCommand.Parameters.AddWithValue("@bookId", bookId);
 
-            await updateBookCmd.ExecuteNonQueryAsync();
+            await updateBookCommand.ExecuteNonQueryAsync();
 
             var newBorrowing = new Borrowing(Guid.NewGuid(), userId, bookId);
 
@@ -287,13 +287,13 @@ public class BookRepository : IBookRepository
                                           VALUES 
                                           (@id, @userId, @bookId, @borrowedAt, NULL)";
 
-            await using var insertCmd = new NpgsqlCommand(insertBorrowingSql, _db, transaction);
-            insertCmd.Parameters.AddWithValue("@id", newBorrowing.Id);
-            insertCmd.Parameters.AddWithValue("@userId", userId);
-            insertCmd.Parameters.AddWithValue("@bookId", bookId);
-            insertCmd.Parameters.AddWithValue("@borrowedAt", newBorrowing.BorrowedAt);
+            await using var insertCommand = new NpgsqlCommand(insertBorrowingSql, _db, transaction);
+            insertCommand.Parameters.AddWithValue("@id", newBorrowing.Id);
+            insertCommand.Parameters.AddWithValue("@userId", userId);
+            insertCommand.Parameters.AddWithValue("@bookId", bookId);
+            insertCommand.Parameters.AddWithValue("@borrowedAt", newBorrowing.BorrowedAt);
 
-            await insertCmd.ExecuteNonQueryAsync();
+            await insertCommand.ExecuteNonQueryAsync();
 
             await transaction.CommitAsync();
             return newBorrowing;
@@ -319,33 +319,33 @@ public class BookRepository : IBookRepository
                 AND returned_at IS NULL 
                 FOR UPDATE";
 
-            await using var getCmd = new NpgsqlCommand(getBorrowingSql, _db, transaction);
-            getCmd.Parameters.AddWithValue("@borrowingId", borrowingId);
-            getCmd.Parameters.AddWithValue("@userId", userId);
+            await using var getCommand = new NpgsqlCommand(getBorrowingSql, _db, transaction);
+            getCommand.Parameters.AddWithValue("@borrowingId", borrowingId);
+            getCommand.Parameters.AddWithValue("@userId", userId);
 
             await EnsureConnectionOpen();
 
-            var bookId = (Guid?)await getCmd.ExecuteScalarAsync();
+            var bookId = (Guid?)await getCommand.ExecuteScalarAsync();
 
             if (bookId is null)
                 throw new Exception("Borrowing record not found, already returned, or doesn't belong to user");
 
             const string updateBookSql = "UPDATE books SET is_borrowed = false WHERE id = @bookId";
 
-            await using var updateBookCmd = new NpgsqlCommand(updateBookSql, _db, transaction);
-            updateBookCmd.Parameters.AddWithValue("@bookId", bookId);
+            await using var updateBookCommand = new NpgsqlCommand(updateBookSql, _db, transaction);
+            updateBookCommand.Parameters.AddWithValue("@bookId", bookId);
 
-            await updateBookCmd.ExecuteNonQueryAsync();
+            await updateBookCommand.ExecuteNonQueryAsync();
 
             const string updateBorrowingSql = @"UPDATE borrowings 
                                                     SET returned_at = @returnedAt 
                                                     WHERE id = @borrowingId";
 
-            await using var updateCmd = new NpgsqlCommand(updateBorrowingSql, _db, transaction);
-            updateCmd.Parameters.AddWithValue("@borrowingId", borrowingId);
-            updateCmd.Parameters.AddWithValue("@returnedAt", DateTime.UtcNow);
+            await using var updateCommand = new NpgsqlCommand(updateBorrowingSql, _db, transaction);
+            updateCommand.Parameters.AddWithValue("@borrowingId", borrowingId);
+            updateCommand.Parameters.AddWithValue("@returnedAt", DateTime.UtcNow);
 
-            await updateCmd.ExecuteNonQueryAsync();
+            await updateCommand.ExecuteNonQueryAsync();
 
             await transaction.CommitAsync();
         }
@@ -364,12 +364,12 @@ public class BookRepository : IBookRepository
                         WHERE user_id = @userId
                         ORDER BY borrowed_at DESC";
 
-        await using var cmd = new NpgsqlCommand(sql, _db);
-        cmd.Parameters.AddWithValue("@userId", userId);
+        await using var command = new NpgsqlCommand(sql, _db);
+        command.Parameters.AddWithValue("@userId", userId);
 
         await EnsureConnectionOpen();
 
-        await using var reader = await cmd.ExecuteReaderAsync();
+        await using var reader = await command.ExecuteReaderAsync();
         while (await reader.ReadAsync())
         {
             var borrowing = new Borrowing(
@@ -405,23 +405,24 @@ public class BookRepository : IBookRepository
                                 br.borrowed_at
                             FROM borrowings br
                             JOIN books b ON br.book_id = b.id
-                            WHERE br.user_id = @userId
+                            WHERE br.user_id = @userId AND b.is_borrowed
                             ORDER BY br.borrowed_at DESC
                             LIMIT @take OFFSET @skip;
 
                             SELECT COUNT(*) 
-                            FROM borrowings 
-                            WHERE user_id = @userId;
+                            FROM borrowings br
+                            JOIN books b ON br.book_id = b.id
+                            WHERE user_id = @userId AND b.is_borrowed;
                             ";
 
-        await using var cmd = new NpgsqlCommand(sql, _db);
-        cmd.Parameters.AddWithValue("@userId", userId);
-        cmd.Parameters.AddWithValue("@take", take);
-        cmd.Parameters.AddWithValue("@skip", skip);
+        await using var command = new NpgsqlCommand(sql, _db);
+        command.Parameters.AddWithValue("@userId", userId);
+        command.Parameters.AddWithValue("@take", take);
+        command.Parameters.AddWithValue("@skip", skip);
 
         await EnsureConnectionOpen();
 
-        await using var reader = await cmd.ExecuteReaderAsync();
+        await using var reader = await command.ExecuteReaderAsync();
         while (await reader.ReadAsync())
         {
             var borrowingBook = new Book(

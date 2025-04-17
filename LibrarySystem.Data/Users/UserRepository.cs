@@ -18,21 +18,21 @@ public class UserRepository : IUserRepository
     {
         const string sql = "SELECT COUNT(*) FROM users WHERE is_deleted = false";
 
-        await using var cmd = new NpgsqlCommand(sql, _db);
+        await using var command = new NpgsqlCommand(sql, _db);
         await EnsureConnectionOpen();
 
-        return Convert.ToInt32(await cmd.ExecuteScalarAsync());
+        return Convert.ToInt32(await command.ExecuteScalarAsync());
     }
 
     public async Task DeleteAsync(Guid id)
     {
         const string sql = "UPDATE users SET is_deleted = true WHERE id = @id";
 
-        await using var cmd = new NpgsqlCommand(sql, _db);
-        cmd.Parameters.AddWithValue("@id", id);
+        await using var command = new NpgsqlCommand(sql, _db);
+        command.Parameters.AddWithValue("@id", id);
 
         await EnsureConnectionOpen();
-        await cmd.ExecuteNonQueryAsync();
+        await command.ExecuteNonQueryAsync();
     }
 
     public async Task<User?> GetByIdAsync(Guid id)
@@ -41,12 +41,12 @@ public class UserRepository : IUserRepository
                               FROM users 
                               WHERE id = @id AND is_deleted = false";
 
-        await using var cmd = new NpgsqlCommand(sql, _db);
-        cmd.Parameters.AddWithValue("@id", id);
+        await using var command = new NpgsqlCommand(sql, _db);
+        command.Parameters.AddWithValue("@id", id);
 
         await EnsureConnectionOpen();
 
-        await using var reader = await cmd.ExecuteReaderAsync();
+        await using var reader = await command.ExecuteReaderAsync();
         if (await reader.ReadAsync())
         {
             var user = new User(
@@ -72,12 +72,12 @@ public class UserRepository : IUserRepository
                               FROM users 
                               WHERE email = @email AND is_deleted = false";
 
-        await using var cmd = new NpgsqlCommand(sql, _db);
-        cmd.Parameters.AddWithValue("@email", email);
+        await using var command = new NpgsqlCommand(sql, _db);
+        command.Parameters.AddWithValue("@email", email);
 
         await EnsureConnectionOpen();
 
-        await using var reader = await cmd.ExecuteReaderAsync();
+        await using var reader = await command.ExecuteReaderAsync();
         if (await reader.ReadAsync())
         {
             var user = new User(
@@ -104,11 +104,11 @@ public class UserRepository : IUserRepository
                               FROM users 
                               WHERE is_deleted = false";
 
-        await using var cmd = new NpgsqlCommand(sql, _db);
+        await using var command = new NpgsqlCommand(sql, _db);
 
         await EnsureConnectionOpen();
 
-        await using var reader = await cmd.ExecuteReaderAsync();
+        await using var reader = await command.ExecuteReaderAsync();
         while (await reader.ReadAsync())
         {
             var user = new User(
@@ -140,13 +140,13 @@ public class UserRepository : IUserRepository
                               FROM users 
                               WHERE is_deleted = false";
 
-        await using var cmd = new NpgsqlCommand(sql, _db);
-        cmd.Parameters.AddWithValue("@skip", skip);
-        cmd.Parameters.AddWithValue("@take", take);
+        await using var command = new NpgsqlCommand(sql, _db);
+        command.Parameters.AddWithValue("@skip", skip);
+        command.Parameters.AddWithValue("@take", take);
 
         await EnsureConnectionOpen();
 
-        await using var reader = await cmd.ExecuteReaderAsync();
+        await using var reader = await command.ExecuteReaderAsync();
         while (await reader.ReadAsync())
         {
             var user = new User(
@@ -175,17 +175,17 @@ public class UserRepository : IUserRepository
                                VALUES 
                                (@id, @firstName, @lastName, @email, @phoneNumber, @passwordHash, @createdAt, false)";
 
-        await using var cmd = new NpgsqlCommand(sql, _db);
-        cmd.Parameters.AddWithValue("@id", entity.Id);
-        cmd.Parameters.AddWithValue("@firstName", entity.FirstName);
-        cmd.Parameters.AddWithValue("@lastName", entity.LastName);
-        cmd.Parameters.AddWithValue("@email", entity.Email);
-        cmd.Parameters.AddWithValue("@phoneNumber", entity.PhoneNumber);
-        cmd.Parameters.AddWithValue("@passwordHash", entity.PasswordHash);
-        cmd.Parameters.AddWithValue("@createdAt", entity.CreatedAt);
+        await using var command = new NpgsqlCommand(sql, _db);
+        command.Parameters.AddWithValue("@id", entity.Id);
+        command.Parameters.AddWithValue("@firstName", entity.FirstName);
+        command.Parameters.AddWithValue("@lastName", entity.LastName);
+        command.Parameters.AddWithValue("@email", entity.Email);
+        command.Parameters.AddWithValue("@phoneNumber", entity.PhoneNumber);
+        command.Parameters.AddWithValue("@passwordHash", entity.PasswordHash);
+        command.Parameters.AddWithValue("@createdAt", entity.CreatedAt);
 
         await EnsureConnectionOpen();
-        await cmd.ExecuteNonQueryAsync();
+        await command.ExecuteNonQueryAsync();
     }
 
     public async Task UpdateAsync(User entity)
@@ -198,17 +198,17 @@ public class UserRepository : IUserRepository
                                    password_hash = @passwordHash
                                WHERE id = @id AND is_deleted = false";
 
-        await using var cmd = new NpgsqlCommand(sql, _db);
+        await using var command = new NpgsqlCommand(sql, _db);
 
-        cmd.Parameters.Add(new NpgsqlParameter("@id", NpgsqlDbType.Uuid) { Value = entity.Id });
-        cmd.Parameters.Add(new NpgsqlParameter("@firstName", NpgsqlDbType.Text) { Value = entity.FirstName });
-        cmd.Parameters.Add(new NpgsqlParameter("@lastName", NpgsqlDbType.Text) { Value = entity.LastName });
-        cmd.Parameters.Add(new NpgsqlParameter("@email", NpgsqlDbType.Text) { Value = entity.Email });
-        cmd.Parameters.Add(new NpgsqlParameter("@phoneNumber", NpgsqlDbType.Text) { Value = entity.PhoneNumber });
-        cmd.Parameters.Add(new NpgsqlParameter("@passwordHash", NpgsqlDbType.Text) { Value = entity.PasswordHash });
+        command.Parameters.Add(new NpgsqlParameter("@id", NpgsqlDbType.Uuid) { Value = entity.Id });
+        command.Parameters.Add(new NpgsqlParameter("@firstName", NpgsqlDbType.Text) { Value = entity.FirstName });
+        command.Parameters.Add(new NpgsqlParameter("@lastName", NpgsqlDbType.Text) { Value = entity.LastName });
+        command.Parameters.Add(new NpgsqlParameter("@email", NpgsqlDbType.Text) { Value = entity.Email });
+        command.Parameters.Add(new NpgsqlParameter("@phoneNumber", NpgsqlDbType.Text) { Value = entity.PhoneNumber });
+        command.Parameters.Add(new NpgsqlParameter("@passwordHash", NpgsqlDbType.Text) { Value = entity.PasswordHash });
 
         await EnsureConnectionOpen();
-        await cmd.ExecuteNonQueryAsync();
+        await command.ExecuteNonQueryAsync();
     }
 
     private async Task EnsureConnectionOpen()

@@ -19,5 +19,4 @@ public class CreateBookDto
     [Required]
     [StringLength(maximumLength: 13, MinimumLength = 10)]
     public string ISBN { get; set; } = string.Empty;
-
 }

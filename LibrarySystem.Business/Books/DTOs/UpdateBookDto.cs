@@ -7,8 +7,19 @@ public class UpdateBookDto
     [Required]
     public Guid Id { get; set; }
 
-    public string? Title { get; set; }
-    public string? Description { get; set; }
-    public string? Author { get; set; }
-    public string? ISBN { get; set; }
+    [Required]
+    [StringLength(maximumLength: 100, MinimumLength = 5)]
+    public string Title { get; set; } = string.Empty;
+
+    [Required]
+    [StringLength(maximumLength: 500, MinimumLength = 10)]
+    public string Description { get; set; } = string.Empty;
+
+    [Required]
+    [StringLength(maximumLength: 50, MinimumLength = 3)]
+    public string Author { get; set; } = string.Empty;
+
+    [Required]
+    [StringLength(maximumLength: 13, MinimumLength = 10)]
+    public string ISBN { get; set; } = string.Empty;
 }

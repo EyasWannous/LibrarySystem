@@ -1,83 +1,114 @@
 ﻿@model LibrarySystem.BusinessLogic.Books.DTOs.BookDto
 @{
     ViewData["Title"] = "Book Details";
+    var isBorrowedByMe = ViewBag.IsBorrowedByMe ?? false;
 }
 
-<div class="container mt-4">
+<div class="container py-4">
     @if (TempData["SuccessMessage"] != null)
     {
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            @TempData["SuccessMessage"]
+        <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+            <i class="fas fa-check-circle me-2"></i> @TempData["SuccessMessage"]
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     }
     @if (TempData["ErrorMessage"] != null)
     {
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            @TempData["ErrorMessage"]
+        <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+            <i class="fas fa-exclamation-circle me-2"></i> @TempData["ErrorMessage"]
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     }
 
-    <div class="card shadow-sm">
-        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-            <h2 class="h5 mb-0">@Model.Title</h2>
-            <span class="badge @(Model.IsBorrowed ? "bg-warning" : "bg-success")">
-                @(Model.IsBorrowed ? "Borrowed" : "Available")
-            </span>
+    <div class="card border-0 shadow-lg overflow-hidden">
+        <div class="card-header bg-gradient-primary text-white py-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1 class="h3 mb-0">
+                    <i class="fas fa-bookmark me-2"></i>@Model.Title
+                </h1>
+                <span class="badge @(Model.IsBorrowed ? "bg-warning" : "bg-success") rounded-pill px-3 py-2">
+                    <i class="fas @(Model.IsBorrowed ? "fa-clock" : "fa-check-circle") me-1"></i>
+                    @(Model.IsBorrowed ? "Borrowed" : "Available")
+                </span>
+            </div>
         </div>
 
-        <div class="card-body">
-            <div class="row mb-4">
-                <div class="col-md-4 text-center mb-3 mb-md-0">
-                    <div class="bg-light p-4 rounded">
-                        <i class="fas fa-book-open fa-4x text-primary mb-3"></i>
-                        <p class="mb-1"><strong>ISBN:</strong></p>
-                        <p class="text-muted">@Model.ISBN</p>
+        <div class="card-body p-0">
+            <div class="row g-0">
+                <div class="col-lg-4 bg-light p-4 d-flex flex-column align-items-center justify-content-center">
+                    <div class="book-cover-placeholder rounded-lg shadow-sm p-4 mb-3 bg-white">
+                        <i class="fas fa-book-open fa-5x text-primary"></i>
+                    </div>
+                    <div class="text-center mt-3">
+                        <h3 class="h5 text-muted">ISBN</h3>
+                        <p class="lead font-monospace">@Model.ISBN</p>
                     </div>
                 </div>
 
-                <div class="col-md-8">
-                    <dl class="row">
-                        <dt class="col-sm-4">Author:</dt>
-                        <dd class="col-sm-8">@Model.Author</dd>
+                <div class="col-lg-8 p-4">
+                    <div class="book-details">
+                        <div class="detail-item py-3 border-bottom">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-user-edit text-primary me-3 fa-lg"></i>
+                                <div>
+                                    <h3 class="h6 text-muted mb-1">Author</h3>
+                                    <p class="mb-0 lead">@Model.Author</p>
+                                </div>
+                            </div>
+                        </div>
 
-                        <dt class="col-sm-4">Added Date:</dt>
-                        <dd class="col-sm-8">@Model.CreatedAt.ToString("MMMM dd, yyyy")</dd>
+                        <div class="detail-item py-3 border-bottom">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-calendar-alt text-primary me-3 fa-lg"></i>
+                                <div>
+                                    <h3 class="h6 text-muted mb-1">Added Date</h3>
+                                    <p class="mb-0">@Model.CreatedAt.ToString("MMMM dd, yyyy")</p>
+                                </div>
+                            </div>
+                        </div>
 
-                        <dt class="col-sm-4">Description:</dt>
-                        <dd class="col-sm-8">@Model.Description</dd>
-                    </dl>
+                        <div class="detail-item py-3">
+                            <div class="d-flex">
+                                <i class="fas fa-align-left text-primary me-3 fa-lg mt-1"></i>
+                                <div>
+                                    <h3 class="h6 text-muted mb-2">Description</h3>
+                                    <p class="mb-0 text-justify">@(string.IsNullOrEmpty(Model.Description) ? "No description available" : Model.Description)</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="card-footer bg-transparent border-top-0">
-            <div class="d-flex justify-content-between">
-                <a asp-action="Index" class="btn btn-outline-secondary">
-                    <i class="fas fa-arrow-left me-1"></i> Back to List
+        <div class="card-footer bg-white border-top py-3">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-center">
+                <a asp-action="Index" class="btn btn-outline-secondary mb-2 mb-md-0">
+                    <i class="fas fa-arrow-left me-2"></i> Back to Catalog
                 </a>
 
                 @if (User.Identity?.IsAuthenticated ?? false)
                 {
-                    <div class="btn-group" role="group">
-                        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">
-                            <i class="fas fa-edit me-1"></i> Edit
+                    <div class="btn-group shadow-sm" role="group">
+                        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning px-4">
+                            <i class="fas fa-edit me-2"></i> Edit
                         </a>
 
-                        @if (Model.IsBorrowed)
+                        @if (Model.IsBorrowed && isBorrowedByMe)
                         {
                             <form asp-action="Return" asp-route-id="@Model.Id" method="post" class="d-inline">
-                                <button type="submit" class="btn btn-success">
-                                    <i class="fas fa-book-return me-1"></i> Return
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-success px-4">
+                                    <i class="fas fa-undo me-2"></i> Return
                                 </button>
                             </form>
                         }
-                        else
+                        else if (!Model.IsBorrowed)
                         {
                             <form asp-action="Borrow" asp-route-id="@Model.Id" method="post" class="d-inline">
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="fas fa-book-reader me-1"></i> Borrow
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-primary px-4">
+                                    <i class="fas fa-book-reader me-2"></i> Borrow
                                 </button>
                             </form>
                         }
@@ -90,23 +121,66 @@
 
 @section Styles {
     <style>
-        .card {
-            border: none;
+        .bg-gradient-primary {
+            background: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);
+        }
+
+        .book-cover-placeholder {
+            width: 200px;
+            height: 250px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .detail-item {
+            transition: all 0.3s ease;
+        }
+
+            .detail-item:hover {
+                background-color: rgba(67, 97, 238, 0.05);
+                transform: translateX(5px);
+            }
+
+        .lead {
+            font-weight: 500;
+        }
+
+        .font-monospace {
+            letter-spacing: 1px;
+        }
+
+        .text-justify {
+            text-align: justify;
+            text-justify: inter-word;
+        }
+
+        .rounded-lg {
+            border-radius: 0.75rem;
+        }
+
+        .btn {
+            transition: all 0.2s ease;
             border-radius: 0.5rem;
-            overflow: hidden;
         }
 
-        .card-header {
-            border-radius: 0.5rem 0.5rem 0 0 !important;
+        .btn-outline-secondary:hover {
+            background-color: #f8f9fa;
         }
 
-        dt {
-            font-weight: 600;
-            color: #6c757d;
+        .btn-group .btn {
+            border-radius: 0;
         }
 
-        dd {
-            margin-bottom: 0.75rem;
-        }
+            .btn-group .btn:first-child {
+                border-top-left-radius: 0.5rem;
+                border-bottom-left-radius: 0.5rem;
+            }
+
+            .btn-group .btn:last-child {
+                border-top-right-radius: 0.5rem;
+                border-bottom-right-radius: 0.5rem;
+            }
     </style>
 }
