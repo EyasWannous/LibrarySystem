@@ -4,6 +4,7 @@ using LibrarySystem.BusinessLogic.PasswordHashers;
 using LibrarySystem.BusinessLogic.Tokens;
 using LibrarySystem.BusinessLogic.Users;
 using LibrarySystem.Data.Books;
+using LibrarySystem.Data.Cache;
 using LibrarySystem.Data.Migrations;
 using LibrarySystem.Data.Users;
 using LibrarySystem.Presentation.Middlewares;
@@ -24,6 +25,15 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddScoped(_ =>
     new NpgsqlConnection(connectionString)
 );
+
+builder.Services.AddStackExchangeRedisCache(redisOpitons =>
+{
+    redisOpitons.Configuration = builder.Configuration.GetConnectionString("Redis");
+});
+
+builder.Services.AddDistributedMemoryCache();
+
+builder.Services.AddScoped<ICacheService, CacheService>();
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IBookRepository, BookRepository>();
