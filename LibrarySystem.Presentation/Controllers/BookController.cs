@@ -2,7 +2,6 @@
 using LibrarySystem.BusinessLogic.Books.DTOs;
 using LibrarySystem.BusinessLogic.DTOs;
 using LibrarySystem.Data.Results;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -25,7 +24,7 @@ public class BookController : Controller
     [AllowAnonymous]
     public async Task<IActionResult> Index(GetPaginateListDto input)
     {
-        input.Take = input.Take == 0 ? 10 : input.Take;
+        input.Take = input.Take <= 0 ? 12 : input.Take;
         var books = await _bookService.GetListAsync(input);
 
         if (books is null)
@@ -40,7 +39,12 @@ public class BookController : Controller
     [AllowAnonymous]
     public async Task<IActionResult> Search(SearchBookDto input)
     {
+        input.Take = input.Take <= 0 ? 12 : input.Take;
+
         var result = await _bookService.SearchAsync(input);
+
+        ViewBag.Pagination = input;
+
         return View("Index", result);
     }
 

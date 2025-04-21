@@ -4,7 +4,7 @@
     ViewData["Title"] = "Books";
 
     int skip = ViewBag.Pagination?.Skip ?? 0;
-    int take = ViewBag.Pagination?.Take > 0 ? ViewBag.Pagination.Take : 10;
+    int take = ViewBag.Pagination?.Take > 0 ? ViewBag.Pagination.Take : 12;
     int currentPage = (skip / take) + 1;
     int totalPages = Model?.TotalCount > 0 ? (int)Math.Ceiling((double)Model.TotalCount / take) : 1;
     int startPage = Math.Max(1, currentPage - 2);
@@ -147,14 +147,14 @@
 </style>
 
 <div class="container py-4">
-    @if (TempData["SuccessMessage"] != null)
+    @if (TempData["SuccessMessage"] is not null)
     {
         <div class="alert alert-success alert-dismissible fade show" role="alert">
             <i class="fas fa-check-circle me-2"></i> @TempData["SuccessMessage"]
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     }
-    @if (TempData["ErrorMessage"] != null)
+    @if (TempData["ErrorMessage"] is not null)
     {
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
             <i class="fas fa-exclamation-circle me-2"></i> @TempData["ErrorMessage"]
@@ -162,13 +162,13 @@
         </div>
     }
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="display-5 fw-bold text-primary">
+    <div class="d-flex justify-content-between align-items-center mb-4" style="height: 58px;">
+        <h1 class="display-5 fw-bold text-primary mb-0">
             <i class="fas fa-book-open me-2"></i>Book Collection
         </h1>
         @if (User.Identity?.IsAuthenticated ?? false)
         {
-            <a asp-action="Create" class="btn btn-primary">
+            <a asp-action="Create" class="btn btn-primary h-100 d-flex align-items-center">
                 <i class="fas fa-plus me-1"></i> Add New Book
             </a>
         }
@@ -176,7 +176,7 @@
 
     <div class="search-card">
         <form asp-action="Search" method="get">
-            <div class="row g-3">
+            <div class="row g-3 align-items-end">
                 <div class="col-md-3">
                     <div class="form-floating">
                         <input name="Title" class="form-control" placeholder=" " value="@title" id="titleInput">
@@ -195,12 +195,12 @@
                         <label for="isbnInput">Search by ISBN</label>
                     </div>
                 </div>
-                <div class="col-md-3 d-flex align-items-end">
-                    <div class="d-flex w-100">
-                        <button type="submit" class="btn btn-primary me-2 flex-grow-1">
+                <div class="col-md-3">
+                    <div class="d-flex w-100 gap-2" style="height: 58px;">
+                        <button type="submit" class="btn btn-primary flex-grow-1 h-100">
                             <i class="fas fa-search me-1"></i> Search
                         </button>
-                        <a asp-action="Index" class="btn btn-outline-secondary">
+                        <a asp-action="Index" class="btn btn-outline-secondary h-100 d-flex align-items-center justify-content-center">
                             <i class="fas fa-undo me-1"></i> Clear
                         </a>
                     </div>
@@ -287,7 +287,12 @@
             <nav aria-label="Page navigation">
                 <ul class="pagination mb-0" style="font-size: 1.05rem;">
                     <li class="page-item @(currentPage == 1 ? "disabled" : "")">
-                        <a class="page-link px-3 py-2" href="@Url.Action("Index", new { Skip = skip - take, Take = take, Title = title, Author = author, ISBN = isbn })" aria-label="Previous">
+                        @{
+                            var actionName = string.IsNullOrEmpty(title) && string.IsNullOrEmpty(author) && string.IsNullOrEmpty(isbn)
+                            ? "Index"
+                            : "Search";
+                        }
+                        <a class="page-link px-3 py-2" href="@Url.Action(actionName, new { Skip = skip - take, Take = take, Title = title, Author = author, ISBN = isbn })" aria-label="Previous">
                             <span aria-hidden="true">&laquo;</span>
                         </a>
                     </li>
@@ -295,7 +300,7 @@
                     @if (startPage > 1)
                     {
                         <li class="page-item">
-                            <a class="page-link px-3 py-2" href="@Url.Action("Index", new { Skip = 0, Take = take, Title = title, Author = author, ISBN = isbn })">1</a>
+                            <a class="page-link px-3 py-2" href="@Url.Action(actionName, new { Skip = 0, Take = take, Title = title, Author = author, ISBN = isbn })">1</a>
                         </li>
                         @if (startPage > 2)
                         {
@@ -308,7 +313,7 @@
                     @for (int i = startPage; i <= endPage; i++)
                     {
                         <li class="page-item @(i == currentPage ? "active" : "")">
-                            <a class="page-link px-3 py-2" href="@Url.Action("Index", new { Skip = (i - 1) * take, Take = take, Title = title, Author = author, ISBN = isbn })">
+                            <a class="page-link px-3 py-2" href="@Url.Action(actionName, new { Skip = (i - 1) * take, Take = take, Title = title, Author = author, ISBN = isbn })">
                                 @i
                             </a>
                         </li>
@@ -323,14 +328,14 @@
                             </li>
                         }
                         <li class="page-item">
-                            <a class="page-link px-3 py-2" href="@Url.Action("Index", new { Skip = (totalPages - 1) * take, Take = take, Title = title, Author = author, ISBN = isbn })">
+                            <a class="page-link px-3 py-2" href="@Url.Action(actionName, new { Skip = (totalPages - 1) * take, Take = take, Title = title, Author = author, ISBN = isbn })">
                                 @totalPages
                             </a>
                         </li>
                     }
 
                     <li class="page-item @(currentPage >= totalPages ? "disabled" : "")">
-                        <a class="page-link px-3 py-2" href="@Url.Action("Index", new { Skip = skip + take, Take = take, Title = title, Author = author, ISBN = isbn })" aria-label="Next">
+                        <a class="page-link px-3 py-2" href="@Url.Action(actionName, new { Skip = skip + take, Take = take, Title = title, Author = author, ISBN = isbn })" aria-label="Next">
                             <span aria-hidden="true">&raquo;</span>
                         </a>
                     </li>

@@ -1,4 +1,6 @@
-﻿namespace LibrarySystem.Data.Books;
+﻿using System.Text.Json.Serialization;
+
+namespace LibrarySystem.Data.Books;
 
 public class Borrowing
 {
@@ -13,6 +15,17 @@ public class Borrowing
         Id = id;
         UserId = userId;
         BookId = bookId;
+    }
+
+
+    [JsonConstructor]
+    public Borrowing(Guid id, Guid userId, Guid bookId, DateTime borrowedAt, DateTime? returnedAt)
+    {
+        Id = id;
+        UserId = userId;
+        BookId = bookId;
+        ReturnedAt = borrowedAt;
+        ReturnedAt = returnedAt;
     }
 
     public void SetBorrowedAt(DateTime borrowedAt) => BorrowedAt = borrowedAt;

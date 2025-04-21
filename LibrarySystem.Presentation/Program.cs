@@ -4,12 +4,15 @@ using LibrarySystem.BusinessLogic.PasswordHashers;
 using LibrarySystem.BusinessLogic.Tokens;
 using LibrarySystem.BusinessLogic.Users;
 using LibrarySystem.Data.Books;
+using LibrarySystem.Data.Cache;
+using LibrarySystem.Data.Cache.Jobs;
 using LibrarySystem.Data.Migrations;
 using LibrarySystem.Data.Users;
 using LibrarySystem.Presentation.Middlewares;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Npgsql;
+using StackExchange.Redis;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -24,6 +27,23 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddScoped(_ =>
     new NpgsqlConnection(connectionString)
 );
+
+var redisConnectionString = builder.Configuration.GetConnectionString("Redis")!;
+builder.Services.AddStackExchangeRedisCache(redisOpitons =>
+{
+    redisOpitons.Configuration = redisConnectionString;
+});
+
+builder.Services.AddSingleton<IConnectionMultiplexer>(_ =>
+    ConnectionMultiplexer.Connect(redisConnectionString)
+);
+
+builder.Services.AddHybridCache();
+
+builder.Services.AddScoped<IHybridCacheService, HybridCacheService>();
+
+builder.Services.AddHostedService<CacheInvalidationKeyBackgroundService>();
+builder.Services.AddHostedService<CacheInvalidationTagBackgroundService>();
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IBookRepository, BookRepository>();
