@@ -7,10 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Migrations\Scripts\0003-SeedData.sql" />
-  </ItemGroup>
-
-  <ItemGroup>
     <EmbeddedResource Include="Migrations\Scripts\0001-CreateTables.sql" />
     <EmbeddedResource Include="Migrations\Scripts\0002-AddIndexes.sql" />
     <EmbeddedResource Include="Migrations\Scripts\0003-SeedData.sql" />
@@ -19,6 +15,9 @@
   <ItemGroup>
     <PackageReference Include="dbup-core" Version="6.0.4" />
     <PackageReference Include="dbup-postgresql" Version="6.0.3" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Hybrid" Version="9.4.0" />
+    <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="9.0.2" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="9.0.4" />
     <PackageReference Include="Npgsql" Version="9.0.3" />
   </ItemGroup>
 

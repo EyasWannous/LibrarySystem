@@ -1,5 +1,10 @@
 ﻿using LibrarySystem.Data.Books;
+using LibrarySystem.Data.Cache;
+using LibrarySystem.Data.Results;
+using Microsoft.Extensions.Caching.Hybrid;
+using Moq;
 using Npgsql;
+using Xunit;
 
 namespace LibrarySystem.Data.Tests.Integration;
 
@@ -7,7 +12,7 @@ public class BookRepositoryTests : IAsyncLifetime
 {
     private NpgsqlConnection _connection;
     private BookRepository _repository;
-    private NpgsqlTransaction _transaction;
+    private Mock<IHybridCacheService> _mockCacheService;
     private Guid _testUserId;
     private Guid _testBookId1;
     private Guid _testBookId2;
@@ -33,14 +38,84 @@ public class BookRepositoryTests : IAsyncLifetime
             await createCmd.ExecuteNonQueryAsync();
         }
     }
+
     public async Task InitializeAsync()
     {
         _connection = new NpgsqlConnection("Host=localhost;Port=5432;Database=library_test;Username=Titan;Password=Titan");
         await _connection.OpenAsync();
-        _repository = new BookRepository(_connection);
+
+        // Setup mock cache service
+        _mockCacheService = new Mock<IHybridCacheService>();
+        ConfigureMockCacheService();
+
+        _repository = new BookRepository(_connection, _mockCacheService.Object);
 
         await CreateTestSchema();
         await InsertTestData();
+    }
+
+    private void ConfigureMockCacheService()
+    {
+        _mockCacheService.Setup(x => x.GetOrCreateAsync(
+                It.IsAny<string>(),
+                It.IsAny<Func<CancellationToken, ValueTask<Book?>>>(),
+                It.IsAny<HybridCacheEntryFlags>(),
+                It.IsAny<IEnumerable<string>>(),
+                It.IsAny<TimeSpan?>(),
+                It.IsAny<TimeSpan?>(),
+                It.IsAny<CancellationToken>()))
+            .Returns<string, Func<CancellationToken, ValueTask<Book?>>, HybridCacheEntryFlags, IEnumerable<string>, TimeSpan?, TimeSpan?, CancellationToken>(
+                (key, factory, flags, tags, expiration, localExpiration, ct) => factory(ct));
+
+        _mockCacheService.Setup(x => x.GetOrCreateAsync(
+                It.IsAny<string>(),
+                It.IsAny<Func<CancellationToken, ValueTask<IEnumerable<Book>>>>(),
+                It.IsAny<HybridCacheEntryFlags>(),
+                It.IsAny<IEnumerable<string>>(),
+                It.IsAny<TimeSpan?>(),
+                It.IsAny<TimeSpan?>(),
+                It.IsAny<CancellationToken>()))
+            .Returns<string, Func<CancellationToken, ValueTask<IEnumerable<Book>>>, HybridCacheEntryFlags, IEnumerable<string>, TimeSpan?, TimeSpan?, CancellationToken>(
+                (key, factory, flags, tags, expiration, localExpiration, ct) => factory(ct));
+
+        _mockCacheService.Setup(x => x.GetOrCreateAsync(
+                It.IsAny<string>(),
+                It.IsAny<Func<CancellationToken, ValueTask<PaginatedResponse<Book>>>>(),
+                It.IsAny<HybridCacheEntryFlags>(),
+                It.IsAny<IEnumerable<string>>(),
+                It.IsAny<TimeSpan?>(),
+                It.IsAny<TimeSpan?>(),
+                It.IsAny<CancellationToken>()))
+            .Returns<string, Func<CancellationToken, ValueTask<PaginatedResponse<Book>>>, HybridCacheEntryFlags, IEnumerable<string>, TimeSpan?, TimeSpan?, CancellationToken>(
+                (key, factory, flags, tags, expiration, localExpiration, ct) => factory(ct));
+
+        _mockCacheService.Setup(x => x.GetOrCreateAsync(
+                It.IsAny<string>(),
+                It.IsAny<Func<CancellationToken, ValueTask<int>>>(),
+                It.IsAny<HybridCacheEntryFlags>(),
+                It.IsAny<IEnumerable<string>>(),
+                It.IsAny<TimeSpan?>(),
+                It.IsAny<TimeSpan?>(),
+                It.IsAny<CancellationToken>()))
+            .Returns<string, Func<CancellationToken, ValueTask<int>>, HybridCacheEntryFlags, IEnumerable<string>, TimeSpan?, TimeSpan?, CancellationToken>(
+                (key, factory, flags, tags, expiration, localExpiration, ct) => factory(ct));
+
+        _mockCacheService.Setup(x => x.GetOrCreateAsync(
+                It.IsAny<string>(),
+                It.IsAny<Func<CancellationToken, ValueTask<IEnumerable<Borrowing>>>>(),
+                It.IsAny<HybridCacheEntryFlags>(),
+                It.IsAny<IEnumerable<string>>(),
+                It.IsAny<TimeSpan?>(),
+                It.IsAny<TimeSpan?>(),
+                It.IsAny<CancellationToken>()))
+            .Returns<string, Func<CancellationToken, ValueTask<IEnumerable<Borrowing>>>, HybridCacheEntryFlags, IEnumerable<string>, TimeSpan?, TimeSpan?, CancellationToken>(
+                (key, factory, flags, tags, expiration, localExpiration, ct) => factory(ct));
+
+        _mockCacheService.Setup(x => x.RemoveAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Returns(ValueTask.CompletedTask);
+
+        _mockCacheService.Setup(x => x.RemoveByTagsAsync(It.IsAny<List<string>>(), It.IsAny<CancellationToken>()))
+            .Returns(ValueTask.CompletedTask);
     }
 
     public async Task DisposeAsync()
@@ -221,7 +296,7 @@ public class BookRepositoryTests : IAsyncLifetime
     {
         using var separateConnection = new NpgsqlConnection("Host=localhost;Port=5432;Database=library_test;Username=Titan;Password=Titan");
         await separateConnection.OpenAsync();
-        var separateRepo = new BookRepository(separateConnection);
+        var separateRepo = new BookRepository(separateConnection, _mockCacheService.Object);
 
         var borrowing = await separateRepo.BorrowBookAsync(_testUserId, _testBookId1);
 
@@ -237,7 +312,7 @@ public class BookRepositoryTests : IAsyncLifetime
     {
         using var separateConnection = new NpgsqlConnection("Host=localhost;Port=5432;Database=library_test;Username=Titan;Password=Titan");
         await separateConnection.OpenAsync();
-        var separateRepo = new BookRepository(separateConnection);
+        var separateRepo = new BookRepository(separateConnection, _mockCacheService.Object);
 
         var borrowing = await separateRepo.BorrowBookAsync(_testUserId, _testBookId1);
 
@@ -256,7 +331,7 @@ public class BookRepositoryTests : IAsyncLifetime
     {
         using var separateConnection = new NpgsqlConnection("Host=localhost;Port=5432;Database=library_test;Username=Titan;Password=Titan");
         await separateConnection.OpenAsync();
-        var separateRepo = new BookRepository(separateConnection);
+        var separateRepo = new BookRepository(separateConnection, _mockCacheService.Object);
 
         var borrowing1 = await separateRepo.BorrowBookAsync(_testUserId, _testBookId1);
         var borrowing2 = await separateRepo.BorrowBookAsync(_testUserId, _testBookId2);

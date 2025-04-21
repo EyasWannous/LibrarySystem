@@ -1,4 +1,6 @@
-﻿namespace LibrarySystem.Data.Books;
+﻿using System.Text.Json.Serialization;
+
+namespace LibrarySystem.Data.Books;
 
 public class Book
 {
@@ -10,7 +12,7 @@ public class Book
     public bool IsBorrowed { get; private set; } = false;
     public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
     public bool IsDeleted { get; private set; } = false;
-    
+
     public Book(Guid id, string description, string title, string author, string isbn)
     {
         Id = id;
@@ -18,6 +20,19 @@ public class Book
         Title = title;
         Author = author;
         ISBN = isbn;
+    }
+
+    [JsonConstructor]
+    public Book(Guid id, string description, string title, string author, string isbn, bool isBorrowed, DateTime createdAt, bool isDeleted)
+    {
+        Id = id;
+        Description = description;
+        Title = title;
+        Author = author;
+        ISBN = isbn;
+        IsBorrowed = isBorrowed;
+        CreatedAt = createdAt;
+        IsDeleted = isDeleted;
     }
 
     public void SetTitle(string title) => Title = title;
