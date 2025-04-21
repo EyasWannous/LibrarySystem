@@ -1,4 +1,5 @@
-﻿using LibrarySystem.Data.Results;
+﻿using LibrarySystem.Data.Cache;
+using LibrarySystem.Data.Results;
 using Npgsql;
 using NpgsqlTypes;
 using System.Data;
@@ -9,12 +10,44 @@ public class BookRepository : IBookRepository
 {
     private readonly NpgsqlConnection _db;
 
-    public BookRepository(NpgsqlConnection db)
+    private readonly string EntityName = nameof(Book);
+    private string AllKey => $"allOf_{EntityName}";
+    private string PaginateKeyTag => $"paginate_{EntityName}_";
+    private string KeyOfOneTag => $"oneOf_{EntityName}_Id: ";
+    private string CountKey => $"count_{EntityName}";
+    private string SearchTag => $"search_{EntityName}";
+    private string UserBorrowingsKeyTag => $"userBorrowings_";
+    private string UserBorrowingBooksKeyTag => $"userBorrowingBooks_";
+
+    private string MakeKeyOne(Guid id) => KeyOfOneTag + id.ToString();
+    private string MakePaginateKey(int skip, int take) => PaginateKeyTag + "skip: " + skip + "_take: " + take;
+
+    private string MakeSearchKey(string? title = null, string? author = null, string? isbn = null, int skip = 0, int take = 10) 
+        => SearchTag + "_title: " + title + "_author: " + author + "_isbn: " + isbn + "_skip: " + skip + "_take: " + take;
+
+    private string MakeUserBorrowingsKey(Guid userId) => UserBorrowingsKeyTag + userId;
+    private string MakeUserBorrowingBooksKey(Guid userId, int skip, int take) 
+        => UserBorrowingBooksKeyTag + userId + "_skip:" + skip + "_take:" + take;
+
+
+    private readonly IHybridCacheService _hybridCache;
+
+    public BookRepository(NpgsqlConnection db, IHybridCacheService hybridCache)
     {
         _db = db;
+        _hybridCache = hybridCache;
     }
 
     public async Task<int> CountAsync()
+    {
+        return await _hybridCache.GetOrCreateAsync(
+            CountKey,
+            async _ => await CountDbAsync(),
+            tags: [CountKey]
+        );
+    }
+
+    private async Task<int> CountDbAsync()
     {
         const string sql = "SELECT COUNT(*) FROM books WHERE is_deleted = false";
 
@@ -26,6 +59,24 @@ public class BookRepository : IBookRepository
 
     public async Task DeleteAsync(Guid id)
     {
+        await Task.WhenAll(
+            _hybridCache.RemoveAsync(MakeKeyOne(id)).AsTask(),
+            _hybridCache.RemoveByTagsAsync([
+                AllKey,
+                PaginateKeyTag,
+                SearchTag,
+                CountKey,
+                UserBorrowingsKeyTag,
+                UserBorrowingBooksKeyTag
+            ]).AsTask()
+        );
+
+        await DeleteDbAsync(id);
+    }
+
+    private async Task DeleteDbAsync(Guid id)
+    {
+
         const string sql = "UPDATE books SET is_deleted = true WHERE id = @id";
 
         using var command = new NpgsqlCommand(sql, _db);
@@ -36,6 +87,17 @@ public class BookRepository : IBookRepository
     }
 
     public async Task<Book?> GetByIdAsync(Guid id)
+    {
+        var OneKey = MakeKeyOne(id);
+
+        return await _hybridCache.GetOrCreateAsync(
+            OneKey,
+            async _ => await GetByIdDbAsync(id),
+            tags: [KeyOfOneTag]
+        );
+    }
+
+    private async Task<Book?> GetByIdDbAsync(Guid id)
     {
         const string sql = @"SELECT id, title, description, author, isbn, is_borrowed, created_at 
                            FROM books 
@@ -68,6 +130,15 @@ public class BookRepository : IBookRepository
 
     public async Task<IEnumerable<Book>> GetListAsync()
     {
+        return await _hybridCache.GetOrCreateAsync(
+            AllKey,
+            async _ => await GetListDbAsync(),
+            tags: [AllKey]
+        );
+    }
+
+    private async Task<IEnumerable<Book>> GetListDbAsync()
+    {
         var books = new List<Book>();
         const string sql = @"SELECT id, title, description, author, isbn, is_borrowed, created_at 
                            FROM books 
@@ -98,6 +169,17 @@ public class BookRepository : IBookRepository
     }
 
     public async Task<PaginatedResponse<Book>> GetPaginateAsync(int skip = 0, int take = 10)
+    {
+        var paginateKey = MakePaginateKey(skip, take);
+
+        return await _hybridCache.GetOrCreateAsync(
+            paginateKey,
+            async _ => await GetPaginateDbAsync(skip, take),
+            tags: [PaginateKeyTag]
+        );
+    }
+
+    private async Task<PaginatedResponse<Book>> GetPaginateDbAsync(int skip = 0, int take = 10)
     {
         var books = new List<Book>();
         const string sql = @"SELECT id, title, description, author, isbn, is_borrowed, created_at 
@@ -141,6 +223,18 @@ public class BookRepository : IBookRepository
 
     public async Task InsertAsync(Book entity)
     {
+        await _hybridCache.RemoveByTagsAsync([
+            AllKey,
+            PaginateKeyTag,
+            SearchTag,
+            CountKey
+        ]);
+
+        await InsertDbAsync(entity);
+    }
+
+    private async Task InsertDbAsync(Book entity)
+    {
         const string sql = @"INSERT INTO books 
                            (id, title, description, author, isbn, is_borrowed, created_at, is_deleted)
                            VALUES 
@@ -160,6 +254,22 @@ public class BookRepository : IBookRepository
     }
 
     public async Task<PaginatedResponse<Book>> SearchAsync(
+        string? title = null,
+        string? author = null,
+        string? isbn = null,
+        int skip = 0,
+        int take = 10)
+    {
+        var seachKey = MakeSearchKey(title, author, isbn, skip, take);
+
+        return await _hybridCache.GetOrCreateAsync(
+            seachKey,
+            async _ => await SearchDbAsync(title, author, isbn, skip, take),
+            tags: [SearchTag]
+        );
+    }
+
+    private async Task<PaginatedResponse<Book>> SearchDbAsync(
         string? title = null,
         string? author = null,
         string? isbn = null,
@@ -231,6 +341,23 @@ public class BookRepository : IBookRepository
 
     public async Task UpdateAsync(Book entity)
     {
+        await Task.WhenAll(
+            _hybridCache.RemoveAsync(MakeKeyOne(entity.Id)).AsTask(),
+            _hybridCache.RemoveByTagsAsync([
+                AllKey,
+                PaginateKeyTag,
+                SearchTag,
+                CountKey,
+                UserBorrowingsKeyTag,
+                UserBorrowingBooksKeyTag
+            ]).AsTask()
+        );
+
+        await UpdateDbAsync(entity);
+    }
+
+    private async Task UpdateDbAsync(Book entity)
+    {
         const string sql = @"UPDATE books 
                                SET title = @title, 
                                    description = @description, 
@@ -252,6 +379,25 @@ public class BookRepository : IBookRepository
     }
 
     public async Task<Borrowing> BorrowBookAsync(Guid userId, Guid bookId)
+    {
+        var result = await BorrowBookDbAsync(userId, bookId);
+
+        await Task.WhenAll(
+            _hybridCache.RemoveAsync(MakeKeyOne(bookId)).AsTask(),
+            _hybridCache.RemoveByTagsAsync([
+                AllKey,
+                PaginateKeyTag,
+                SearchTag,
+                CountKey,
+                UserBorrowingsKeyTag,
+                UserBorrowingBooksKeyTag
+            ]).AsTask()
+        );
+
+        return result;
+    }
+
+    private async Task<Borrowing> BorrowBookDbAsync(Guid userId, Guid bookId)
     {
         await using var transaction = await _db.BeginTransactionAsync();
 
@@ -304,8 +450,24 @@ public class BookRepository : IBookRepository
             throw;
         }
     }
-
+    
     public async Task ReturnBookAsync(Guid userId, Guid borrowingId)
+    {
+        await _hybridCache.RemoveByTagsAsync([
+            KeyOfOneTag,
+            AllKey,
+            PaginateKeyTag,
+            SearchTag,
+            CountKey,
+            UserBorrowingsKeyTag,
+            UserBorrowingBooksKeyTag
+        ]);
+
+
+        await ReturnBookDbAsync(userId, borrowingId);
+    }
+    
+    private async Task ReturnBookDbAsync(Guid userId, Guid borrowingId)
     {
         await using var transaction = await _db.BeginTransactionAsync();
 
@@ -355,8 +517,19 @@ public class BookRepository : IBookRepository
             throw;
         }
     }
-
+    
     public async Task<IEnumerable<Borrowing>> GetUserBorrowingsAsync(Guid userId)
+    {
+        var userBorrowingsKey = MakeUserBorrowingsKey(userId);
+
+        return await _hybridCache.GetOrCreateAsync(
+            userBorrowingsKey,
+            async _ => await GetUserBorrowingsDbAsync(userId),
+            tags: [UserBorrowingsKeyTag]
+        );
+    }
+
+    private async Task<IEnumerable<Borrowing>> GetUserBorrowingsDbAsync(Guid userId)
     {
         var borrowings = new List<Borrowing>();
         const string sql = @"SELECT id, user_id, book_id, borrowed_at, returned_at 
@@ -391,7 +564,18 @@ public class BookRepository : IBookRepository
         return borrowings;
     }
 
-    public async Task<PaginatedResponse<Book>> GetUserBorrowingBooksAsync(Guid userId, int skip = 0, int take = 0)
+    public async Task<PaginatedResponse<Book>> GetUserBorrowingBooksAsync(Guid userId, int skip = 0, int take = 10)
+    {
+        var userBorrowingBooksKey = MakeUserBorrowingBooksKey(userId, skip, take);
+
+        return await _hybridCache.GetOrCreateAsync(
+            userBorrowingBooksKey,
+            async _ => await GetUserBorrowingBooksDbAsync(userId, skip, take),
+            tags: [UserBorrowingBooksKeyTag]
+        );
+    }
+    
+    private async Task<PaginatedResponse<Book>> GetUserBorrowingBooksDbAsync(Guid userId, int skip = 0, int take = 0)
     {
         var books = new List<Book>();
 
