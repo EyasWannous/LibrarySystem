@@ -419,12 +419,14 @@ public class BookRepository : IBookRepository
             if (isBorrowed is true)
                 throw new Exception("Book is already borrowed");
 
-            const string updateBookSql = "UPDATE books SET is_borrowed = true WHERE id = @bookId";
+            const string updateBookSql = "UPDATE books SET is_borrowed = true WHERE id = @bookId And is_borrowed = false";
 
             await using var updateBookCommand = new NpgsqlCommand(updateBookSql, _db, transaction);
             updateBookCommand.Parameters.AddWithValue("@bookId", bookId);
 
-            await updateBookCommand.ExecuteNonQueryAsync();
+            var affectedRows = await updateBookCommand.ExecuteNonQueryAsync();
+            if (affectedRows is 0)
+                throw new Exception("Book is already borrowed");
 
             var newBorrowing = new Borrowing(Guid.NewGuid(), userId, bookId);
 
